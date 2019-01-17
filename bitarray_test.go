@@ -95,3 +95,24 @@ func TestNibbleInsert(t *testing.T) {
 	}
 
 }
+
+func TestNibbleInsertAtZero(t *testing.T) {
+	s := &sliceArray{}
+	s.Insert(4, 0)
+	s.Set(3, true)
+	s.Set(0, true)
+	s.Insert(4, 0)
+	fmt.Println(s.debug())
+	if s.Get(0) {
+		t.Error("got a wrong 0")
+	}
+	if s.Get(3) {
+		t.Error("got a wrong 3")
+	}
+	if !s.Get(4) {
+		t.Error("got no 4")
+	}
+	if !s.Get(7) {
+		t.Error("got no 7")
+	}
+}
