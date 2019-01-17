@@ -89,7 +89,7 @@ func (s *sliceArray) debug() string {
 	return s.String()
 }
 
-func (s *sliceArray) Insert(n, at int) error {
+func (s *sliceArray) Insert(n, at int) (err error) {
 	if at > s.length {
 		panic("can't extend starting at a too large offset")
 	}
@@ -103,9 +103,12 @@ func (s *sliceArray) Insert(n, at int) error {
 		panic("can only insert a sliceArray at offset multiples of 4")
 	}
 	if n%8 == 4 {
-		return s.insertFour(n, at)
+		err = s.insertFour(n, at)
+	} else {
+		err = s.insertEight(n, at)
 	}
-	return s.insertEight(n, at)
+	s.length = s.length + n
+	return err
 }
 
 func (s *sliceArray) insertFour(n, at int) error {
@@ -116,10 +119,8 @@ func (s *sliceArray) insertFour(n, at int) error {
 	newbytes := (n >> 3) + 1
 	s.bytes = append(s.bytes, make([]byte, newbytes)...)
 	if at == s.length {
-		s.length = s.length + n
 		return nil
 	}
-	s.length = s.length + n
 
 	off := at >> 3
 	if at%8 == 4 {
@@ -136,13 +137,35 @@ func (s *sliceArray) insertFour(n, at int) error {
 		}
 		s.bytes[len(s.bytes)-1] = s.bytes[len(s.bytes)-1] << 4
 	} else {
-		panic("wtf")
+		s.bytes = nil
 	}
 	return nil
 }
 
 func (s *sliceArray) insertFourExtra(n, at int) error {
-	s.bytes = nil
+	newbytes := (n - 4) >> 3
+	s.bytes = append(s.bytes, make([]byte, newbytes)...)
+	if at == s.length {
+		return nil
+	}
+	off := at >> 3
+	if at%8 == 4 {
+		if newbytes != 0 {
+			copy(s.bytes[off+newbytes:], s.bytes[off:])
+			for x := 0; x < newbytes; x++ {
+				s.bytes[off+x] = 0x00
+			}
+		}
+		var a byte
+		for x := off + newbytes; x < len(s.bytes)-1; x++ {
+			t := s.bytes[x] << 4
+			s.bytes[off] = a | (s.bytes[off] >> 4)
+			a = t
+		}
+	} else {
+		s.bytes = nil
+	}
+
 	return nil
 }
 
@@ -151,10 +174,8 @@ func (s *sliceArray) insertEight(n, at int) error {
 	nBytes := n >> 3
 	s.bytes = append(s.bytes, make([]byte, nBytes)...)
 	if at == s.length {
-		s.length = s.length + n
 		return nil
 	}
-	s.length = s.length + n
 
 	off := at >> 3
 	if at%8 == 0 {
