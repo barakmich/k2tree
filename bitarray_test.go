@@ -1,6 +1,7 @@
 package k2tree
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 )
@@ -94,6 +95,34 @@ func TestNibbleInsert(t *testing.T) {
 		t.Error("new 2 should be set")
 	}
 
+}
+
+func TestInsertTable(t *testing.T) {
+	tt := []struct {
+		n      int
+		at     int
+		input  []byte
+		output []byte
+		length int
+	}{
+		{
+			n:      4,
+			at:     12,
+			input:  []byte{0xAB, 0xCD, 0xEF},
+			length: 24,
+			output: []byte{0xAB, 0xC0, 0xDE, 0xF0},
+		},
+	}
+	for _, x := range tt {
+		s := &sliceArray{
+			bytes:  x.input,
+			length: x.length,
+		}
+		s.Insert(x.n, x.at)
+		if !bytes.Equal(s.bytes, x.output) {
+			t.Errorf("mismatch! got %#v expected %#v", s.bytes, x.output)
+		}
+	}
 }
 
 func TestNibbleInsertAtZero(t *testing.T) {
