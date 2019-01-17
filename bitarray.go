@@ -151,19 +151,31 @@ func (s *sliceArray) insertFourExtra(n, at int) error {
 	off := at >> 3
 	if at%8 == 4 {
 		if newbytes != 0 {
+			copy(s.bytes[off+1+newbytes:], s.bytes[off+1:])
+			for x := 0; x < newbytes; x++ {
+				s.bytes[off+1+x] = 0x00
+			}
+		}
+		a := s.bytes[off] << 4
+		s.bytes[off] &= 0xF0
+		for x := off + newbytes + 1; x < len(s.bytes); x++ {
+			t := s.bytes[x] << 4
+			s.bytes[x] = a | (s.bytes[x] >> 4)
+			a = t
+		}
+	} else {
+		if newbytes != 0 {
 			copy(s.bytes[off+newbytes:], s.bytes[off:])
 			for x := 0; x < newbytes; x++ {
 				s.bytes[off+x] = 0x00
 			}
 		}
 		var a byte
-		for x := off + newbytes; x < len(s.bytes)-1; x++ {
+		for x := off + newbytes; x < len(s.bytes); x++ {
 			t := s.bytes[x] << 4
-			s.bytes[off] = a | (s.bytes[off] >> 4)
+			s.bytes[x] = a | (s.bytes[x] >> 4)
 			a = t
 		}
-	} else {
-		s.bytes = nil
 	}
 
 	return nil
