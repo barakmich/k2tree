@@ -102,13 +102,50 @@ func (s *sliceArray) Insert(n, at int) {
 	if at%4 != 0 {
 		panic("can only insert a sliceArray at offset multiples of 4")
 	}
-	byteExtension := n%8 == 0
-	nBytes := n >> 3
-	if !byteExtension {
-		nBytes++
+	if n%8 == 4 {
+		s.insertFour(n, at)
+		return
 	}
-	s.bytes = append(s.bytes, make([]byte, nBytes)...)
+	s.insertEight(n, at)
+}
 
+func (s *sliceArray) insertFour(n, at int) {
+	newbytes := (n >> 3) + 1
+
+	if s.length%8 == 4 {
+		// We have some extra bits
+		newbytes = (n - 4) >> 3
+	}
+	s.bytes = append(s.bytes, make([]byte, newbytes)...)
+	if at == s.length {
+		s.length = s.length + n
+		return
+	}
+	s.length = s.length + n
+
+	off := at >> 3
+	if at%8 == 4 {
+		copy(s.bytes[off+1+newbytes:], s.bytes[off+1:])
+		for x := 0; x < newbytes; x++ {
+			s.bytes[off+1+x] = 0x00
+		}
+		a := s.bytes[off] << 4
+		s.bytes[off] &= 0xF0
+		for x := off + newbytes; x < len(s.bytes)-1; x++ {
+			b := (s.bytes[x+1] & 0xF0) >> 4
+			s.bytes[x] = a | b
+			a = s.bytes[x+1] << 4
+		}
+		s.bytes[len(s.bytes)-1] = s.bytes[len(s.bytes)-1] << 4
+	} else {
+		panic("wtf")
+	}
+}
+
+func (s *sliceArray) insertEight(n, at int) {
+
+	nBytes := n >> 3
+	s.bytes = append(s.bytes, make([]byte, nBytes)...)
 	if at == s.length {
 		s.length = s.length + n
 		return
@@ -129,14 +166,43 @@ func (s *sliceArray) Insert(n, at int) {
 		s.bytes[off+nBytes] = s.bytes[off] & 0x0F
 		s.bytes[off] = s.bytes[off] & 0xF0
 	}
-	if byteExtension {
-		return
-	}
-	for x := off + nBytes; x < len(s.bytes)-1; x++ {
-		a := s.bytes[x]
-		b := s.bytes[x+1]
-		s.bytes[x] = a << 4
-		s.bytes[x] |= b >> 4
-	}
-	s.bytes[len(s.bytes)-1] = s.bytes[len(s.bytes)-1] << 4
 }
+
+//byteExtension := n%8 == 0
+//nBytes := n >> 3
+//if !byteExtension {
+//nBytes++
+//}
+//s.bytes = append(s.bytes, make([]byte, nBytes)...)
+
+//if at == s.length {
+//s.length = s.length + n
+//return
+//}
+//s.length = s.length + n
+
+//off := at >> 3
+//if at%8 == 0 {
+//copy(s.bytes[off+nBytes:], s.bytes[off:])
+//for x := 0; x < nBytes; x++ {
+//s.bytes[off+x] = 0x00
+//}
+//} else {
+//copy(s.bytes[off+1+nBytes:], s.bytes[off+1:])
+//for x := 0; x < nBytes; x++ {
+//s.bytes[off+1+x] = 0x00
+//}
+//s.bytes[off+nBytes] = s.bytes[off] & 0x0F
+//s.bytes[off] = s.bytes[off] & 0xF0
+//}
+//if byteExtension {
+//return
+//}
+//for x := off + nBytes; x < len(s.bytes)-1; x++ {
+//a := s.bytes[x]
+//b := s.bytes[x+1]
+//s.bytes[x] = a << 4
+//s.bytes[x] |= b >> 4
+//}
+//s.bytes[len(s.bytes)-1] = s.bytes[len(s.bytes)-1] << 4
+//}
