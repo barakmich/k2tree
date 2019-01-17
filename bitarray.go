@@ -137,7 +137,18 @@ func (s *sliceArray) insertFour(n, at int) error {
 		}
 		s.bytes[len(s.bytes)-1] = s.bytes[len(s.bytes)-1] << 4
 	} else {
-		s.bytes = nil
+		if newbytes != 0 {
+			copy(s.bytes[off+newbytes:], s.bytes[off:])
+			for x := 0; x < newbytes; x++ {
+				s.bytes[off+x] = 0x00
+			}
+		}
+		fmt.Printf("%#v\n", s.bytes)
+		for x := off + newbytes - 1; x < len(s.bytes)-1; x++ {
+			b := s.bytes[x+1] >> 4
+			s.bytes[x] = s.bytes[x]<<4 | b
+		}
+		s.bytes[len(s.bytes)-1] = s.bytes[len(s.bytes)-1] << 4
 	}
 	return nil
 }
