@@ -11,6 +11,7 @@ type bitarray interface {
 	Get(at int) bool
 	Count(from, to int) int
 	Insert(n int, at int)
+	debug() string
 }
 
 var _ bitarray = (*sliceArray)(nil)
@@ -76,8 +77,16 @@ func (s *sliceArray) Get(at int) bool {
 	return !(s.bytes[off]&mask == 0x00)
 }
 
+func (s *sliceArray) String() string {
+	str := fmt.Sprintf("%d ", s.length)
+	for _, x := range s.bytes {
+		str += fmt.Sprintf("%08b ", x)
+	}
+	return str
+}
+
 func (s *sliceArray) debug() string {
-	return fmt.Sprintf("%d %#v\n", s.length, s.bytes)
+	return s.String()
 }
 
 func (s *sliceArray) Insert(n, at int) {

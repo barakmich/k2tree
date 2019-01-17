@@ -3,12 +3,13 @@ package k2tree
 // K2Tree is the main data structure for this package. It represents a compressed representation of
 // a graph adjacency matrix.
 type K2Tree struct {
-	t      bitarray
-	l      bitarray
-	tk     layerDef
-	lk     layerDef
-	count  int
-	levels int
+	t            bitarray
+	l            bitarray
+	tk           layerDef
+	lk           layerDef
+	count        int
+	levels       int
+	levelOffsets []int
 }
 
 type layerDef struct {
@@ -76,15 +77,14 @@ func (k *K2Tree) max() int {
 // Add asserts the existence of a link from node i to node j.
 func (k *K2Tree) Add(i, j int) error {
 	if k.t.Len() == 0 {
-		return k.initTree(i, j)
-	}
-	if i > k.max() || j > k.max() {
+		k.initTree(i, j)
+	} else if i > k.max() || j > k.max() {
 		err := k.growTree(max(i, j))
 		if err != nil {
 			return err
 		}
 	}
-	return nil
+	return k.add(i, j)
 }
 
 // Stats returns some statistics about the memory usage of the K2 tree.
