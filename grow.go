@@ -31,7 +31,10 @@ func (k *K2Tree) growTree(i int) error {
 
 func (k *K2Tree) initTree(i, j int) error {
 	l := k.necessaryLayer(max(i, j))
-	k.t.Insert(k.tk.bitsPerLayer, 0)
+	err := k.t.Insert(k.tk.bitsPerLayer, 0)
+	if err != nil {
+		return err
+	}
 	k.levels = l
 	k.levelOffsets = make([]int, l+1)
 	for x := l - 1; x > 0; x-- {
@@ -42,10 +45,12 @@ func (k *K2Tree) initTree(i, j int) error {
 
 func (k *K2Tree) insertToLayer(l int, layerCount int) error {
 	if l == 0 {
-		k.l.Insert(k.lk.bitsPerLayer, layerCount*k.lk.bitsPerLayer)
-		return nil
+		return k.l.Insert(k.lk.bitsPerLayer, layerCount*k.lk.bitsPerLayer)
 	}
-	k.t.Insert(k.tk.bitsPerLayer, (layerCount*k.tk.bitsPerLayer)+k.levelOffsets[l])
+	err := k.t.Insert(k.tk.bitsPerLayer, (layerCount*k.tk.bitsPerLayer)+k.levelOffsets[l])
+	if err != nil {
+		return err
+	}
 	for x := l - 1; x > 0; x-- {
 		k.levelOffsets[x] += k.tk.bitsPerLayer
 	}

@@ -10,7 +10,7 @@ type bitarray interface {
 	Set(at int, val bool)
 	Get(at int) bool
 	Count(from, to int) int
-	Insert(n int, at int)
+	Insert(n int, at int) error
 	debug() string
 }
 
@@ -89,12 +89,12 @@ func (s *sliceArray) debug() string {
 	return s.String()
 }
 
-func (s *sliceArray) Insert(n, at int) {
+func (s *sliceArray) Insert(n, at int) error {
 	if at > s.length {
 		panic("can't extend starting at a too large offset")
 	}
 	if n == 0 {
-		return
+		return nil
 	}
 	if n%4 != 0 {
 		panic("can only extend a sliceArray by nibbles (multiples of 4)")
@@ -103,23 +103,21 @@ func (s *sliceArray) Insert(n, at int) {
 		panic("can only insert a sliceArray at offset multiples of 4")
 	}
 	if n%8 == 4 {
-		s.insertFour(n, at)
-		return
+		return s.insertFour(n, at)
 	}
-	s.insertEight(n, at)
+	return s.insertEight(n, at)
 }
 
-func (s *sliceArray) insertFour(n, at int) {
-	newbytes := (n >> 3) + 1
-
+func (s *sliceArray) insertFour(n, at int) error {
 	if s.length%8 == 4 {
 		// We have some extra bits
-		newbytes = (n - 4) >> 3
+		return s.insertFourExtra(n, at)
 	}
+	newbytes := (n >> 3) + 1
 	s.bytes = append(s.bytes, make([]byte, newbytes)...)
 	if at == s.length {
 		s.length = s.length + n
-		return
+		return nil
 	}
 	s.length = s.length + n
 
@@ -140,15 +138,21 @@ func (s *sliceArray) insertFour(n, at int) {
 	} else {
 		panic("wtf")
 	}
+	return nil
 }
 
-func (s *sliceArray) insertEight(n, at int) {
+func (s *sliceArray) insertFourExtra(n, at int) error {
+	s.bytes = nil
+	return nil
+}
+
+func (s *sliceArray) insertEight(n, at int) error {
 
 	nBytes := n >> 3
 	s.bytes = append(s.bytes, make([]byte, nBytes)...)
 	if at == s.length {
 		s.length = s.length + n
-		return
+		return nil
 	}
 	s.length = s.length + n
 
@@ -166,6 +170,7 @@ func (s *sliceArray) insertEight(n, at int) {
 		s.bytes[off+nBytes] = s.bytes[off] & 0x0F
 		s.bytes[off] = s.bytes[off] & 0xF0
 	}
+	return nil
 }
 
 //byteExtension := n%8 == 0
