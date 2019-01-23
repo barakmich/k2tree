@@ -5,6 +5,7 @@ type bitarray interface {
 	Set(at int, val bool)
 	Get(at int) bool
 	Count(from, to int) int
+	Total() int
 	Insert(n int, at int) error
 	debug() string
 }

@@ -99,7 +99,7 @@ func (k *K2Tree) Add(i, j int) error {
 
 // Stats returns some statistics about the memory usage of the K2 tree.
 func (k *K2Tree) Stats() Stats {
-	c := k.l.Count(0, k.l.Len())
+	c := k.l.Total()
 	bytes := k.l.Len() + k.t.Len()
 	return Stats{
 		BitsPerLink: float64(bytes) / float64(c),

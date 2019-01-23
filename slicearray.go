@@ -3,11 +3,14 @@ package k2tree
 import (
 	"fmt"
 	"math/bits"
+
+	popcount "github.com/tmthrgd/go-popcount"
 )
 
 type sliceArray struct {
 	bytes  []byte
 	length int
+	total  int
 }
 
 var _ bitarray = (*sliceArray)(nil)
@@ -23,10 +26,18 @@ func (s *sliceArray) Set(at int, val bool) {
 	off := at >> 3
 	bit := byte(at & 0x07)
 	t := byte(0x01 << (7 - bit))
+	orig := s.bytes[off]
 	if val {
 		s.bytes[off] = s.bytes[off] | t
 	} else {
 		s.bytes[off] = s.bytes[off] &^ t
+	}
+	if s.bytes[off] != orig {
+		if val {
+			s.total++
+		} else {
+			s.total--
+		}
 	}
 }
 
@@ -54,11 +65,12 @@ func (s *sliceArray) Count(from, to int) int {
 	if endbit != 0 {
 		c += bits.OnesCount8(s.bytes[endoff] & (0xFF &^ (0xFF >> endbit)))
 	}
-	for startoff != endoff {
-		c += bits.OnesCount8(s.bytes[startoff])
-		startoff++
-	}
+	c += int(popcount.CountBytes(s.bytes[startoff:endoff]))
 	return c
+}
+
+func (s *sliceArray) Total() int {
+	return s.total
 }
 
 func (s *sliceArray) Get(at int) bool {
