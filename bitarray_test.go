@@ -7,7 +7,8 @@ import (
 )
 
 func TestSmoke(t *testing.T) {
-	s := &sliceArray{}
+	//s := &sliceArray{}
+	s := newPagedSliceArray(10)
 	s.Insert(24, 0)
 	s.Set(3, true)
 	fmt.Println(s.debug())

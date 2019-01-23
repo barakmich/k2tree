@@ -29,16 +29,26 @@ var fourBitsPerLayer = layerDef{
 var sixteenBitsPerLayer = layerDef{
 	bitsPerLayer:  16,
 	kPerLayer:     4,
-	maskPerLayer:  0x2,
+	maskPerLayer:  0x3,
 	shiftPerLayer: 2,
+}
+
+var sixtyFourBitsPerLayer = layerDef{
+	bitsPerLayer:  64,
+	kPerLayer:     8,
+	maskPerLayer:  0x7,
+	shiftPerLayer: 3,
 }
 
 // New creates a new K2Tree.
 func New() (*K2Tree, error) {
 	t := &sliceArray{}
+	l := &sliceArray{}
+	//t := newPagedSliceArray(10000)
+	//l := newPagedSliceArray(10000)
 	return &K2Tree{
 		t:      t,
-		l:      &sliceArray{},
+		l:      l,
 		tk:     fourBitsPerLayer,
 		lk:     fourBitsPerLayer,
 		levels: 0,

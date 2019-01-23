@@ -70,7 +70,6 @@ func (k *K2Tree) insertToLayer(l int, layerCount int) error {
 }
 
 func (k *K2Tree) add(i, j int) error {
-	fmt.Println("*****")
 	level := k.levels
 	if k.levelOffsets[level] != 0 {
 		panic("top level is not offset 0?")
@@ -82,7 +81,13 @@ func (k *K2Tree) add(i, j int) error {
 		offset := k.offsetTForLayer(i, j, level)
 		bitoff := levelStart + levelOffset + offset
 		count = k.t.Count(levelStart, bitoff)
-		fmt.Println("level:", level, "offset:", offset, "bitoff:", bitoff, "count:", count)
+		//fmt.Println(
+		//"level", level,
+		//"levelStart", levelStart,
+		//"offset", offset,
+		//"bitoff", bitoff,
+		//"count", count,
+		//)
 		if k.t.Get(bitoff) {
 			levelOffset = count * k.tk.bitsPerLayer
 		} else {
@@ -94,9 +99,7 @@ func (k *K2Tree) add(i, j int) error {
 	}
 	offset := k.offsetL(i, j)
 	bitoff := (count * k.lk.bitsPerLayer) + offset
-	fmt.Println("bitoff:", bitoff)
 	k.l.Set(bitoff, true)
-	fmt.Println("*****")
 	return nil
 }
 
