@@ -48,12 +48,15 @@ func TestSixteenBPL(t *testing.T) {
 		t.Fatal(err)
 	}
 	kk.tk = sixteenBitsPerLayer
-	//kk.lk = sixteenBitsPerLayer
-	for x := 0; x < 1000000; x++ {
+	kk.lk = sixteenBitsPerLayer
+	for x := 0; x < 500000; x++ {
 		//fmt.Println("adding", x, x)
-		kk.Add(x, x)
-		//fmt.Println(kk.debug())
+		kk.Add(0, x)
+		if x%100000 == 0 {
+			fmt.Println(x)
+		}
 	}
+	fmt.Println(kk.debug())
 
 	fmt.Printf("%#v\n", kk.Stats())
 

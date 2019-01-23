@@ -42,10 +42,10 @@ var sixtyFourBitsPerLayer = layerDef{
 
 // New creates a new K2Tree.
 func New() (*K2Tree, error) {
-	t := &sliceArray{}
-	l := &sliceArray{}
-	//t := newPagedSliceArray(10000)
-	//l := newPagedSliceArray(10000)
+	//t := &sliceArray{}
+	//l := &sliceArray{}
+	t := newPagedSliceArray(100000)
+	l := newPagedSliceArray(100000)
 	return &K2Tree{
 		t:      t,
 		l:      l,
@@ -100,9 +100,11 @@ func (k *K2Tree) Add(i, j int) error {
 // Stats returns some statistics about the memory usage of the K2 tree.
 func (k *K2Tree) Stats() Stats {
 	c := k.l.Count(0, k.l.Len())
+	bytes := k.l.Len() + k.t.Len()
 	return Stats{
-		BitsPerLink: float64(k.t.Len()+k.l.Len()) / float64(c),
+		BitsPerLink: float64(bytes) / float64(c),
 		Links:       c,
+		Bytes:       bytes >> 3,
 	}
 }
 
@@ -110,4 +112,5 @@ func (k *K2Tree) Stats() Stats {
 type Stats struct {
 	BitsPerLink float64
 	Links       int
+	Bytes       int
 }
