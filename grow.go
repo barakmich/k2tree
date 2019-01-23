@@ -6,7 +6,7 @@ func (k *K2Tree) necessaryLayer(i int) int {
 	// Level 1
 	n := k.lk.kPerLayer * k.tk.kPerLayer
 	l := 1
-	for n < i {
+	for n <= i {
 		n *= k.tk.kPerLayer
 		l++
 	}
@@ -25,8 +25,20 @@ func (k *K2Tree) offsetL(i int, j int) int {
 }
 
 func (k *K2Tree) growTree(i int) error {
-	//n := k.necessaryLayer(i)
-	panic("implement")
+	n := k.necessaryLayer(i)
+	for k.levels != n {
+		err := k.t.Insert(k.tk.bitsPerLayer, 0)
+		if err != nil {
+			return err
+		}
+		k.t.Set(0, true)
+		for x := len(k.levelOffsets) - 1; x > 0; x-- {
+			k.levelOffsets[x] += k.tk.bitsPerLayer
+		}
+		k.levelOffsets = append(k.levelOffsets, 0)
+		k.levels++
+	}
+	return nil
 }
 
 func (k *K2Tree) initTree(i, j int) error {
@@ -66,11 +78,11 @@ func (k *K2Tree) add(i, j int) error {
 	var levelOffset int
 	var count int
 	for level != 0 {
-		fmt.Println("offset", k.levelOffsets)
 		levelStart := k.levelOffsets[level]
 		offset := k.offsetTForLayer(i, j, level)
 		bitoff := levelStart + levelOffset + offset
 		count = k.t.Count(levelStart, bitoff)
+		fmt.Println("level:", level, "offset:", offset, "bitoff:", bitoff, "count:", count)
 		if k.t.Get(bitoff) {
 			levelOffset = count * k.tk.bitsPerLayer
 		} else {
@@ -91,7 +103,6 @@ func (k *K2Tree) add(i, j int) error {
 func (k *K2Tree) debug() string {
 	s := fmt.Sprintln("T: ", k.t.debug())
 	s += fmt.Sprintln("L: ", k.l.debug())
-	s += fmt.Sprintln("Offset: ", k.levelOffsets)
-	s += fmt.Sprintln("Levels: ", k.levels)
+	s += fmt.Sprintln("Offsets: ", k.levelOffsets, "Levels: ", k.levels)
 	return s
 }

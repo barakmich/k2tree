@@ -78,7 +78,7 @@ func (k *K2Tree) max() int {
 func (k *K2Tree) Add(i, j int) error {
 	if k.t.Len() == 0 {
 		k.initTree(i, j)
-	} else if i > k.max() || j > k.max() {
+	} else if i >= k.max() || j >= k.max() {
 		err := k.growTree(max(i, j))
 		if err != nil {
 			return err

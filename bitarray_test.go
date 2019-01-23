@@ -175,6 +175,13 @@ func TestInsertTable(t *testing.T) {
 			length: 28,
 			output: []byte{0xAB, 0xC0, 0x00, 0xDE, 0xF1},
 		},
+		{
+			n:      4,
+			at:     4,
+			input:  []byte{0x19},
+			length: 8,
+			output: []byte{0x10, 0x90},
+		},
 	}
 	for _, x := range tt {
 		s := &sliceArray{
