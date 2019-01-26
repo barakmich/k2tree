@@ -3,13 +3,17 @@ package k2tree
 // K2Tree is the main data structure for this package. It represents a compressed representation of
 // a graph adjacency matrix.
 type K2Tree struct {
-	t            bitarray
-	l            bitarray
-	tk           layerDef
-	lk           layerDef
-	count        int
-	levels       int
-	levelOffsets []int
+	t          bitarray
+	l          bitarray
+	tk         layerDef
+	lk         layerDef
+	count      int
+	levels     int
+	levelInfos []levelInfo
+}
+
+type levelInfo struct {
+	offset int
 }
 
 type layerDef struct {
