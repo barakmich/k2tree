@@ -43,11 +43,11 @@ func (p *pagedSliceArray) Total() int {
 
 func (p *pagedSliceArray) Set(at int, val bool) {
 	for _, x := range p.arrays {
-		if x.Len() > at {
+		if x.length > at {
 			x.Set(at, val)
 			return
 		}
-		at -= x.Len()
+		at -= x.length
 	}
 }
 
@@ -82,7 +82,10 @@ func (p *pagedSliceArray) Count(from, to int) int {
 		}
 		from = 0
 	}
-	panic("end of arrays")
+	if n != 0 {
+		panic("end of arrays")
+	}
+	return count
 }
 
 func (p *pagedSliceArray) Insert(n int, at int) error {

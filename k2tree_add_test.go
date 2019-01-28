@@ -48,9 +48,10 @@ func TestSixteenBPL(t *testing.T) {
 		t.Fatal(err)
 	}
 	kk.tk = sixteenBitsPerLayer
-	kk.lk = fourBitsPerLayer
+	//	kk.lk = fourBitsPerLayer
+	kk.lk = sixteenBitsPerLayer
 	base := 5000000
-	for x := 0; x < 10000000; x++ {
+	for x := 0; x < 40000000; x++ {
 		//fmt.Println("adding", x, x)
 		kk.Add(base+x, base+x)
 		if x%100000 == 0 {

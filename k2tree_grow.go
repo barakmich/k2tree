@@ -35,7 +35,12 @@ func (k *K2Tree) growTree(i int) error {
 		for x := len(k.levelInfos) - 1; x > 0; x-- {
 			k.levelInfos[x].offset += k.tk.bitsPerLayer
 		}
-		k.levelInfos = append(k.levelInfos, levelInfo{})
+		k.levelInfos = append(k.levelInfos, levelInfo{
+			offset:       0,
+			total:        k.tk.bitsPerLayer,
+			midpoint:     k.tk.bitsPerLayer >> 1,
+			fullPopCount: 1,
+		})
 		k.levels++
 	}
 	return nil
@@ -49,6 +54,12 @@ func (k *K2Tree) initTree(i, j int) error {
 	}
 	k.levels = l
 	k.levelInfos = make([]levelInfo, l+1)
+	k.levelInfos[l] = levelInfo{
+		offset:       0,
+		total:        k.tk.bitsPerLayer,
+		midpoint:     k.tk.bitsPerLayer >> 1,
+		fullPopCount: 0,
+	}
 	for x := l - 1; x > 0; x-- {
 		k.levelInfos[x].offset = k.tk.bitsPerLayer
 	}
@@ -59,14 +70,61 @@ func (k *K2Tree) insertToLayer(l int, layerCount int) error {
 	if l == 0 {
 		return k.l.Insert(k.lk.bitsPerLayer, layerCount*k.lk.bitsPerLayer)
 	}
-	err := k.t.Insert(k.tk.bitsPerLayer, (layerCount*k.tk.bitsPerLayer)+k.levelInfos[l].offset)
+	targetBit := layerCount * k.tk.bitsPerLayer
+	err := k.t.Insert(k.tk.bitsPerLayer, targetBit+k.levelInfos[l].offset)
 	if err != nil {
 		return err
 	}
+	k.insertLevelInfo(l, targetBit)
 	for x := l - 1; x > 0; x-- {
 		k.levelInfos[x].offset += k.tk.bitsPerLayer
 	}
 	return nil
+}
+
+func (k *K2Tree) insertLevelInfo(level int, targetBit int) {
+	li := k.levelInfos[level]
+	li.total += k.tk.bitsPerLayer
+	adjust := k.tk.bitsPerLayer >> 1
+	if targetBit <= li.midpoint {
+		li.midpoint += k.tk.bitsPerLayer
+		c := k.t.Count(li.midpoint-adjust, li.midpoint)
+		li.midpoint -= adjust
+		li.midPopCount -= c
+
+	} else {
+		c := k.t.Count(li.midpoint, li.midpoint+adjust)
+		li.midpoint += adjust
+		li.midPopCount += c
+	}
+	k.levelInfos[level] = li
+}
+
+func (k *K2Tree) countLevelStartHelper(level int, levelOffset int, subindex int) int {
+	li := k.levelInfos[level]
+	levelStart := li.offset
+	bitoff := levelStart + levelOffset + subindex
+	if bitoff > li.midpoint+levelStart {
+		if bitoff-li.midpoint < li.total-bitoff {
+			c := k.t.Count(li.midpoint+levelStart, bitoff)
+			return li.midPopCount + c
+		} else {
+			c := k.t.Count(bitoff, levelStart+li.total)
+			return li.fullPopCount - c
+		}
+	}
+	//Fallthrough
+	count := k.t.Count(levelStart, bitoff)
+	return count
+}
+
+func (k *K2Tree) setHelper(bitoff int, level int, value bool) {
+	k.levelInfos[level].fullPopCount++
+	levelStart := k.levelInfos[level].offset
+	if bitoff-levelStart < k.levelInfos[level].midpoint {
+		k.levelInfos[level].midPopCount++
+	}
+	k.t.Set(bitoff, value)
 }
 
 func (k *K2Tree) add(i, j int) error {
@@ -80,7 +138,7 @@ func (k *K2Tree) add(i, j int) error {
 		levelStart := k.levelInfos[level].offset
 		offset := k.offsetTForLayer(i, j, level)
 		bitoff := levelStart + levelOffset + offset
-		count = k.t.Count(levelStart, bitoff)
+		count = k.countLevelStartHelper(level, levelOffset, offset)
 		//fmt.Println(
 		//"level", level,
 		//"levelStart", levelStart,
@@ -91,7 +149,7 @@ func (k *K2Tree) add(i, j int) error {
 		if k.t.Get(bitoff) {
 			levelOffset = count * k.tk.bitsPerLayer
 		} else {
-			k.t.Set(bitoff, true)
+			k.setHelper(bitoff, level, true)
 			k.insertToLayer(level-1, count)
 			levelOffset = count * k.tk.bitsPerLayer
 		}

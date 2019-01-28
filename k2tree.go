@@ -1,5 +1,10 @@
 package k2tree
 
+import (
+	"fmt"
+	"strings"
+)
+
 // K2Tree is the main data structure for this package. It represents a compressed representation of
 // a graph adjacency matrix.
 type K2Tree struct {
@@ -9,11 +14,26 @@ type K2Tree struct {
 	lk         layerDef
 	count      int
 	levels     int
-	levelInfos []levelInfo
+	levelInfos levelInfos
 }
 
 type levelInfo struct {
-	offset int
+	offset       int
+	total        int
+	midpoint     int
+	fullPopCount int
+	midPopCount  int
+}
+
+type levelInfos []levelInfo
+
+func (li levelInfos) String() string {
+	s := make([]string, len(li))
+	for i, x := range li {
+		s[i] = fmt.Sprintf("%d: Off: %d, Total %d, Midpoint %d, Pop: %d, MidPop: %d",
+			i, x.offset, x.total, x.midpoint, x.fullPopCount, x.midPopCount)
+	}
+	return strings.Join(s, "\n")
 }
 
 type layerDef struct {
@@ -48,8 +68,8 @@ var sixtyFourBitsPerLayer = layerDef{
 func New() (*K2Tree, error) {
 	//t := &sliceArray{}
 	//l := &sliceArray{}
-	t := newPagedSliceArray(100000)
-	l := newPagedSliceArray(100000)
+	t := newPagedSliceArray(1000000)
+	l := newPagedSliceArray(1000000)
 	return &K2Tree{
 		t:      t,
 		l:      l,
@@ -108,6 +128,7 @@ func (k *K2Tree) Stats() Stats {
 	return Stats{
 		BitsPerLink: float64(bytes) / float64(c),
 		Links:       c,
+		LevelInfo:   k.levelInfos,
 		Bytes:       bytes >> 3,
 	}
 }
@@ -116,5 +137,6 @@ func (k *K2Tree) Stats() Stats {
 type Stats struct {
 	BitsPerLink float64
 	Links       int
+	LevelInfo   levelInfos
 	Bytes       int
 }
