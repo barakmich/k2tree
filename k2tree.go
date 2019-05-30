@@ -36,40 +36,16 @@ func (li levelInfos) String() string {
 	return strings.Join(s, "\n")
 }
 
-type layerDef struct {
-	bitsPerLayer  int
-	kPerLayer     int
-	maskPerLayer  int
-	shiftPerLayer uint
-}
-
-var fourBitsPerLayer = layerDef{
-	bitsPerLayer:  4,
-	kPerLayer:     2,
-	maskPerLayer:  0x1,
-	shiftPerLayer: 1,
-}
-
-var sixteenBitsPerLayer = layerDef{
-	bitsPerLayer:  16,
-	kPerLayer:     4,
-	maskPerLayer:  0x3,
-	shiftPerLayer: 2,
-}
-
-var sixtyFourBitsPerLayer = layerDef{
-	bitsPerLayer:  64,
-	kPerLayer:     8,
-	maskPerLayer:  0x7,
-	shiftPerLayer: 3,
-}
-
-// New creates a new K2Tree.
+// New creates a new K2 Tree with the default creation options.
 func New() (*K2Tree, error) {
-	//t := &sliceArray{}
-	//l := &sliceArray{}
-	t := newPagedSliceArray(1000000)
-	l := newPagedSliceArray(1000000)
+	return newK2Tree(func() bitarray {
+		return newPagedSliceArray(100000)
+	})
+}
+
+func newK2Tree(sliceFunc newBitArrayFunc) (*K2Tree, error) {
+	t := sliceFunc()
+	l := sliceFunc()
 	return &K2Tree{
 		t:      t,
 		l:      l,
@@ -86,7 +62,7 @@ func max(i, j int) int {
 	return j
 }
 
-func iPow(a, b int) int {
+func intPow(a, b int) int {
 	var result = 1
 
 	for 0 != b {
@@ -100,11 +76,13 @@ func iPow(a, b int) int {
 	return result
 }
 
-func (k *K2Tree) max() int {
+// maxIndex returns the largest node index representable by this
+// K2Tree.
+func (k *K2Tree) maxIndex() int {
 	if k.levels == 0 {
 		return 0
 	}
-	x := iPow(k.tk.kPerLayer, k.levels) * k.lk.kPerLayer
+	x := intPow(k.tk.kPerLayer, k.levels) * k.lk.kPerLayer
 	return x
 }
 
@@ -112,7 +90,7 @@ func (k *K2Tree) max() int {
 func (k *K2Tree) Add(i, j int) error {
 	if k.t.Len() == 0 {
 		k.initTree(i, j)
-	} else if i >= k.max() || j >= k.max() {
+	} else if i >= k.maxIndex() || j >= k.maxIndex() {
 		err := k.growTree(max(i, j))
 		if err != nil {
 			return err

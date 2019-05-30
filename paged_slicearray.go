@@ -13,8 +13,6 @@ type pagedSliceArray struct {
 
 var _ bitarray = (*pagedSliceArray)(nil)
 
-var maxPageSize = 1000
-
 func newPagedSliceArray(size int) *pagedSliceArray {
 	arrays := []*sliceArray{
 		&sliceArray{},
