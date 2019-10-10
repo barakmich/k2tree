@@ -52,6 +52,9 @@ func (s *sliceArray) Count(from, to int) int {
 	if from > s.length || to > s.length {
 		panic("out of range")
 	}
+	if from == to {
+		return 0
+	}
 	c := 0
 	startoff := from >> 3
 	startbit := byte(from & 0x07)

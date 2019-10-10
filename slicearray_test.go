@@ -54,8 +54,6 @@ func TestPerBitarrayType(t *testing.T) {
 }
 
 func testSmoke(t *testing.T) {
-	//s := &sliceArray{}
-	//s := newPagedSliceArray(10)
 	s := curFunc()
 	s.Insert(24, 0)
 	s.Set(3, true)
