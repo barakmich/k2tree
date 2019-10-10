@@ -132,7 +132,7 @@ func (k *K2Tree) insertLevelInfo(level int, targetBit int) {
 	k.levelInfos[level] = li
 }
 
-// countLevelStartHelper uses levelInfos to count
+// countLevelStartHelper uses levelInfos to help count
 func (k *K2Tree) countLevelStartHelper(level int, levelOffset int, subindex int) int {
 	li := k.levelInfos[level]
 	levelStart := li.offset

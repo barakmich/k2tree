@@ -1,10 +1,5 @@
 package k2tree
 
-import (
-	"fmt"
-	"strings"
-)
-
 // K2Tree is the main data structure for this package. It represents a compressed representation of
 // a graph adjacency matrix.
 type K2Tree struct {
@@ -17,25 +12,6 @@ type K2Tree struct {
 	levelInfos levelInfos
 }
 
-type levelInfo struct {
-	offset       int
-	total        int
-	midpoint     int
-	fullPopCount int
-	midPopCount  int
-}
-
-type levelInfos []levelInfo
-
-func (li levelInfos) String() string {
-	s := make([]string, len(li))
-	for i, x := range li {
-		s[i] = fmt.Sprintf("%d: Off: %d, Total %d, Midpoint %d, Pop: %d, MidPop: %d",
-			i, x.offset, x.total, x.midpoint, x.fullPopCount, x.midPopCount)
-	}
-	return strings.Join(s, "\n")
-}
-
 // New creates a new K2 Tree with the default creation options.
 func New() (*K2Tree, error) {
 	return NewWithConfig(DefaultConfig)
@@ -43,7 +19,7 @@ func New() (*K2Tree, error) {
 
 func NewWithConfig(config Config) (*K2Tree, error) {
 	return newK2Tree(func() bitarray {
-		return newPagedSliceArray(10000000)
+		return newPagedSliceArray(1000000)
 	}, config)
 }
 
