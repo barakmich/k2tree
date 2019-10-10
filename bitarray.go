@@ -11,6 +11,8 @@ type bitarray interface {
 	Count(from, to int) int
 	// Total returns the total number of set bits.
 	Total() int
+	// Bytes returns the bitarray as a byte array
+	Bytes() []byte
 	// Insert extends the bitarray by `n` bits. The bits are zeroed
 	// and start at index `at`. Example:
 	// Initial string: 11101

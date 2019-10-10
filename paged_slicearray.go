@@ -7,14 +7,14 @@ import (
 )
 
 type pagedSliceArray struct {
-	arrays   []*sliceArray
+	arrays   []bitarray
 	pagesize int
 }
 
 var _ bitarray = (*pagedSliceArray)(nil)
 
 func newPagedSliceArray(size int) *pagedSliceArray {
-	arrays := []*sliceArray{
+	arrays := []bitarray{
 		&sliceArray{},
 	}
 	return &pagedSliceArray{
@@ -41,11 +41,11 @@ func (p *pagedSliceArray) Total() int {
 
 func (p *pagedSliceArray) Set(at int, val bool) {
 	for _, x := range p.arrays {
-		if x.length > at {
+		if x.Len() > at {
 			x.Set(at, val)
 			return
 		}
-		at -= x.length
+		at -= x.Len()
 	}
 }
 
@@ -86,6 +86,14 @@ func (p *pagedSliceArray) Count(from, to int) int {
 	return count
 }
 
+func (p *pagedSliceArray) Bytes() []byte {
+	var out []byte
+	for _, x := range p.arrays {
+		out = append(out, x.Bytes()...)
+	}
+	return out
+}
+
 func (p *pagedSliceArray) Insert(n int, at int) error {
 	var page *sliceArray
 	var pagei int
@@ -93,12 +101,12 @@ func (p *pagedSliceArray) Insert(n int, at int) error {
 	for i, x := range p.arrays {
 		if x.Len() >= at {
 			pagei = i
-			page = x
+			page = x.(*sliceArray)
 			break
 		}
 		at -= x.Len()
 	}
-	if page.Len() < p.pagesize {
+	if page.length < p.pagesize {
 		return page.Insert(n, at)
 	}
 	l := len(page.bytes) / 2
@@ -110,7 +118,7 @@ func (p *pagedSliceArray) Insert(n int, at int) error {
 	page.bytes = page.bytes[l:]
 	page.length -= l * 8
 	page.total -= newpage.total
-	p.arrays = append(p.arrays[:pagei], append([]*sliceArray{newpage}, p.arrays[pagei:]...)...)
+	p.arrays = append(p.arrays[:pagei], append([]bitarray{newpage}, p.arrays[pagei:]...)...)
 	return p.Insert(n, origat)
 }
 
