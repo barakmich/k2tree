@@ -94,6 +94,9 @@ func testEasyInsert(t *testing.T) {
 	if !s.Get(11) {
 		t.Error("new 11 should be set")
 	}
+	if s.Count(0, 32) != 1 {
+		t.Error("count is incorrect -- only one bit was set")
+	}
 }
 
 func testByteInsert(t *testing.T) {
