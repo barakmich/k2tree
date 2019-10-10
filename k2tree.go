@@ -59,27 +59,6 @@ func newK2Tree(sliceFunc newBitArrayFunc, config Config) (*K2Tree, error) {
 	}, nil
 }
 
-func max(i, j int) int {
-	if i > j {
-		return i
-	}
-	return j
-}
-
-func intPow(a, b int) int {
-	var result = 1
-
-	for 0 != b {
-		if 0 != (b & 1) {
-			result *= a
-		}
-		b >>= 1
-		a *= a
-	}
-
-	return result
-}
-
 // maxIndex returns the largest node index representable by this
 // K2Tree.
 func (k *K2Tree) maxIndex() int {
@@ -91,9 +70,11 @@ func (k *K2Tree) maxIndex() int {
 }
 
 // Add asserts the existence of a link from node i to node j.
+// i and j are zero-indexed, the tree will grow to support them if larger
+// than the tree.
 func (k *K2Tree) Add(i, j int) error {
 	if k.tbits.Len() == 0 {
-		k.initTree(i, j)
+		k.initTree(max(i, j))
 	} else if i >= k.maxIndex() || j >= k.maxIndex() {
 		err := k.growTree(max(i, j))
 		if err != nil {

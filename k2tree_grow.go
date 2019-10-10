@@ -2,6 +2,28 @@ package k2tree
 
 import "fmt"
 
+/*
+Example 8x8 tree with 4 bits per Layer:
+
+Matrix (i across j down):
+
+01010000
+10110001
+01011010
+01010100
+10101000
+01110101
+10110001
+10000000
+
+     2           1
+T: 1111 | 1111 0111 1111 1101
+L  0110|0111|0101|0101|0001|1001|1000|1001|1011|1010|1100|1001|0001|0100
+
+*/
+
+// necessaryLayer computes the number of layers necessary to
+// represent index i
 func (k *K2Tree) necessaryLayer(i int) int {
 	// Level 1
 	n := k.lk.kPerLayer * k.tk.kPerLayer
@@ -13,6 +35,9 @@ func (k *K2Tree) necessaryLayer(i int) int {
 	return l
 }
 
+// offsetTForLayer returns the offset of i, j in layer l.
+// In the above example, i=6, j=2:
+// if l=2 == 1 (top right), if l=1 == 3 (bottom right)
 func (k *K2Tree) offsetTForLayer(i int, j int, l int) int {
 	spl := uint(l-1)*(k.tk.shiftPerLayer) + k.lk.shiftPerLayer
 	x := (i & (k.tk.maskPerLayer << spl)) >> spl
@@ -20,12 +45,14 @@ func (k *K2Tree) offsetTForLayer(i int, j int, l int) int {
 	return (x * k.tk.kPerLayer) + y
 }
 
+// returns the suboffset within the index of the lower bit layer
 func (k *K2Tree) offsetL(i int, j int) int {
 	return ((i & k.lk.maskPerLayer) * k.lk.kPerLayer) + (j & k.lk.maskPerLayer)
 }
 
-func (k *K2Tree) growTree(i int) error {
-	n := k.necessaryLayer(i)
+// growTree grows the K2Tree to be large enough to represent size
+func (k *K2Tree) growTree(size int) error {
+	n := k.necessaryLayer(size)
 	for k.levels != n {
 		err := k.tbits.Insert(k.tk.bitsPerLayer, 0)
 		if err != nil {
@@ -46,8 +73,9 @@ func (k *K2Tree) growTree(i int) error {
 	return nil
 }
 
-func (k *K2Tree) initTree(i, j int) error {
-	l := k.necessaryLayer(max(i, j))
+// initTree initializes a tree of the appropriate size
+func (k *K2Tree) initTree(size int) error {
+	l := k.necessaryLayer(size)
 	err := k.tbits.Insert(k.tk.bitsPerLayer, 0)
 	if err != nil {
 		return err
@@ -66,6 +94,8 @@ func (k *K2Tree) initTree(i, j int) error {
 	return nil
 }
 
+// insertToLayer inserts a new layersize of bits in layer l
+// given an offset determined by the above layer.
 func (k *K2Tree) insertToLayer(l int, layerCount int) error {
 	if l == 0 {
 		return k.lbits.Insert(k.lk.bitsPerLayer, layerCount*k.lk.bitsPerLayer)
@@ -82,6 +112,8 @@ func (k *K2Tree) insertToLayer(l int, layerCount int) error {
 	return nil
 }
 
+// insertLevelInfo updates levelinfos by adding a new layersize of bits
+// in the levelinfo at targetBit.
 func (k *K2Tree) insertLevelInfo(level int, targetBit int) {
 	li := k.levelInfos[level]
 	li.total += k.tk.bitsPerLayer
@@ -100,6 +132,7 @@ func (k *K2Tree) insertLevelInfo(level int, targetBit int) {
 	k.levelInfos[level] = li
 }
 
+// countLevelStartHelper uses levelInfos to count
 func (k *K2Tree) countLevelStartHelper(level int, levelOffset int, subindex int) int {
 	li := k.levelInfos[level]
 	levelStart := li.offset
@@ -118,6 +151,7 @@ func (k *K2Tree) countLevelStartHelper(level int, levelOffset int, subindex int)
 	return count
 }
 
+// setHelper updates levelInfos as it sets the appropriate bit to the right value
 func (k *K2Tree) setHelper(bitoff int, level int, value bool) {
 	k.levelInfos[level].fullPopCount++
 	levelStart := k.levelInfos[level].offset
@@ -127,6 +161,7 @@ func (k *K2Tree) setHelper(bitoff int, level int, value bool) {
 	k.tbits.Set(bitoff, value)
 }
 
+// add is the internal helper to set the appropriate bit at i,j.
 func (k *K2Tree) add(i, j int) error {
 	level := k.levels
 	if k.levelInfos[level].offset != 0 {
@@ -161,6 +196,7 @@ func (k *K2Tree) add(i, j int) error {
 	return nil
 }
 
+// debug debug-prints a K2Tree
 func (k *K2Tree) debug() string {
 	s := fmt.Sprintln("T: ", k.tbits.debug())
 	s += fmt.Sprintln("L: ", k.lbits.debug())
