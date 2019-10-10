@@ -1,5 +1,10 @@
 package k2tree
 
+import (
+	"reflect"
+	"runtime"
+)
+
 func max(i, j int) int {
 	if i > j {
 		return i
@@ -19,4 +24,8 @@ func intPow(a, b int) int {
 	}
 
 	return result
+}
+
+func GetFunctionName(i interface{}) string {
+	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
 }

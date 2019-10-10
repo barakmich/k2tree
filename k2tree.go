@@ -19,7 +19,7 @@ func New() (*K2Tree, error) {
 
 func NewWithConfig(config Config) (*K2Tree, error) {
 	return newK2Tree(func() bitarray {
-		return newQuartileIndex(newPagedSliceArray(100000))
+		return newPagedSliceArray(100000)
 	}, config)
 }
 

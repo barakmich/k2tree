@@ -6,9 +6,57 @@ import (
 	"testing"
 )
 
-func TestSmoke(t *testing.T) {
+var curFunc newBitArrayFunc
+
+var testFuncs []func(t *testing.T) = []func(t *testing.T){
+	testSmoke,
+	testEasyInsert,
+	testByteInsert,
+	testNibbleInsert,
+}
+
+func TestPerBitarrayType(t *testing.T) {
+	tt := []struct {
+		create newBitArrayFunc
+		name   string
+	}{
+		{
+			create: func() bitarray {
+				return &sliceArray{}
+			},
+			name: "SliceArray",
+		},
+		{
+			create: func() bitarray {
+				return newPagedSliceArray(10)
+			},
+			name: "PagedSlice(10)",
+		},
+		{
+			create: func() bitarray {
+				return newPagedSliceArray(1000)
+			},
+			name: "PagedSlice(1000)",
+		},
+		{
+			create: func() bitarray {
+				return newQuartileIndex(&sliceArray{})
+			},
+			name: "QuartileIndex(sliceArray)",
+		},
+	}
+	for _, bitarray := range tt {
+		curFunc = bitarray.create
+		for _, testcase := range testFuncs {
+			t.Run(fmt.Sprintf("%s::%s", bitarray.name, GetFunctionName(testcase)), testcase)
+		}
+	}
+}
+
+func testSmoke(t *testing.T) {
 	//s := &sliceArray{}
-	s := newPagedSliceArray(10)
+	//s := newPagedSliceArray(10)
+	s := curFunc()
 	s.Insert(24, 0)
 	s.Set(3, true)
 	fmt.Println(s.debug())
@@ -36,8 +84,8 @@ func TestSmoke(t *testing.T) {
 	}
 }
 
-func TestEasyInsert(t *testing.T) {
-	s := &sliceArray{}
+func testEasyInsert(t *testing.T) {
+	s := curFunc()
 	s.Insert(24, 0)
 	s.Set(3, true)
 	s.Insert(8, 0)
@@ -50,8 +98,8 @@ func TestEasyInsert(t *testing.T) {
 	}
 }
 
-func TestByteInsert(t *testing.T) {
-	s := &sliceArray{}
+func testByteInsert(t *testing.T) {
+	s := curFunc()
 	s.Insert(24, 0)
 	s.Set(11, true)
 	s.Set(6, true)
@@ -74,8 +122,8 @@ func TestByteInsert(t *testing.T) {
 
 }
 
-func TestNibbleInsert(t *testing.T) {
-	s := &sliceArray{}
+func testNibbleInsert(t *testing.T) {
+	s := curFunc()
 	s.Insert(24, 0)
 	s.Set(11, true)
 	s.Set(6, true)
@@ -196,8 +244,8 @@ func TestInsertTable(t *testing.T) {
 	}
 }
 
-func TestNibbleInsertAtZero(t *testing.T) {
-	s := &sliceArray{}
+func testNibbleInsertAtZero(t *testing.T) {
+	s := curFunc()
 	s.Insert(4, 0)
 	s.Set(3, true)
 	s.Set(0, true)

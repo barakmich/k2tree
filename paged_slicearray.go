@@ -95,6 +95,9 @@ func (p *pagedSliceArray) Bytes() []byte {
 }
 
 func (p *pagedSliceArray) Insert(n int, at int) error {
+	if at > p.Len() {
+		panic("can't extend off the edge of the bitarray")
+	}
 	var page *sliceArray
 	var pagei int
 	origat := at
