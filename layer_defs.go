@@ -1,27 +1,27 @@
 package k2tree
 
-type layerDef struct {
+type LayerDef struct {
 	bitsPerLayer  int
 	kPerLayer     int
 	maskPerLayer  int
 	shiftPerLayer uint
 }
 
-var fourBitsPerLayer = layerDef{
+var FourBitsPerLayer = LayerDef{
 	bitsPerLayer:  4,
 	kPerLayer:     2,
 	maskPerLayer:  0x1,
 	shiftPerLayer: 1,
 }
 
-var sixteenBitsPerLayer = layerDef{
+var SixteenBitsPerLayer = LayerDef{
 	bitsPerLayer:  16,
 	kPerLayer:     4,
 	maskPerLayer:  0x3,
 	shiftPerLayer: 2,
 }
 
-var sixtyFourBitsPerLayer = layerDef{
+var SixtyFourBitsPerLayer = LayerDef{
 	bitsPerLayer:  64,
 	kPerLayer:     8,
 	maskPerLayer:  0x7,

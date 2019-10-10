@@ -8,10 +8,10 @@ import (
 // K2Tree is the main data structure for this package. It represents a compressed representation of
 // a graph adjacency matrix.
 type K2Tree struct {
-	t          bitarray
-	l          bitarray
-	tk         layerDef
-	lk         layerDef
+	tbits      bitarray
+	lbits      bitarray
+	tk         LayerDef
+	lk         LayerDef
 	count      int
 	levels     int
 	levelInfos levelInfos
@@ -38,19 +38,23 @@ func (li levelInfos) String() string {
 
 // New creates a new K2 Tree with the default creation options.
 func New() (*K2Tree, error) {
-	return newK2Tree(func() bitarray {
-		return newPagedSliceArray(100000)
-	})
+	return NewWithConfig(DefaultConfig)
 }
 
-func newK2Tree(sliceFunc newBitArrayFunc) (*K2Tree, error) {
+func NewWithConfig(config Config) (*K2Tree, error) {
+	return newK2Tree(func() bitarray {
+		return newPagedSliceArray(10000000)
+	}, config)
+}
+
+func newK2Tree(sliceFunc newBitArrayFunc, config Config) (*K2Tree, error) {
 	t := sliceFunc()
 	l := sliceFunc()
 	return &K2Tree{
-		t:      t,
-		l:      l,
-		tk:     fourBitsPerLayer,
-		lk:     fourBitsPerLayer,
+		tbits:  t,
+		lbits:  l,
+		tk:     config.TreeLayerDef,
+		lk:     config.CellLayerDef,
 		levels: 0,
 	}, nil
 }
@@ -88,7 +92,7 @@ func (k *K2Tree) maxIndex() int {
 
 // Add asserts the existence of a link from node i to node j.
 func (k *K2Tree) Add(i, j int) error {
-	if k.t.Len() == 0 {
+	if k.tbits.Len() == 0 {
 		k.initTree(i, j)
 	} else if i >= k.maxIndex() || j >= k.maxIndex() {
 		err := k.growTree(max(i, j))
@@ -101,8 +105,8 @@ func (k *K2Tree) Add(i, j int) error {
 
 // Stats returns some statistics about the memory usage of the K2 tree.
 func (k *K2Tree) Stats() Stats {
-	c := k.l.Total()
-	bytes := k.l.Len() + k.t.Len()
+	c := k.lbits.Total()
+	bytes := k.lbits.Len() + k.tbits.Len()
 	return Stats{
 		BitsPerLink: float64(bytes) / float64(c),
 		Links:       c,

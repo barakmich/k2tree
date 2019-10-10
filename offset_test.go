@@ -4,8 +4,8 @@ import "testing"
 
 func TestFourBOffset(t *testing.T) {
 	k2 := &K2Tree{
-		tk: fourBitsPerLayer,
-		lk: fourBitsPerLayer,
+		tk: FourBitsPerLayer,
+		lk: FourBitsPerLayer,
 	}
 
 	tt := []struct {

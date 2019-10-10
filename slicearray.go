@@ -15,6 +15,10 @@ type sliceArray struct {
 
 var _ bitarray = (*sliceArray)(nil)
 
+func newSliceArray() *sliceArray {
+	return &sliceArray{}
+}
+
 func (s *sliceArray) Len() int {
 	return s.length
 }
