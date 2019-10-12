@@ -29,3 +29,9 @@ func intPow(a, b int) int {
 func GetFunctionName(i interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
 }
+
+func assert(test bool, errstr string) {
+	if test {
+		panic(errstr)
+	}
+}

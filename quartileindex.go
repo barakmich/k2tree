@@ -113,18 +113,28 @@ func (q *quartileIndex) Insert(n int, at int) error {
 	}
 	newlen := q.bits.Len()
 	for i := 0; i < 3; i++ {
-		q.adjust(i, (newlen * (i + 1) / 4))
+		q.adjust(i, n, at, (newlen * (i + 1) / 4))
 	}
 	return nil
 }
 
-func (q *quartileIndex) adjust(i int, to int) {
-	from := q.offsets[i]
-	if to < from {
-		panic("How'd this happen?")
+func (q *quartileIndex) adjust(i, n, at, newi int) {
+	oldi := q.offsets[i]
+
+	assert(newi < oldi, "Inserting shrunk the array?")
+
+	q.offsets[i] = newi
+	if (n + at) < oldi {
+		// Entire span below me, adjust for loss.
+		q.counts[i] -= q.bits.Count(newi, oldi+n)
+	} else if at >= oldi {
+		// Entire span above me, adjust for gain.
+		q.counts[i] += q.bits.Count(oldi, newi)
+	} else {
+		// Span intersects me.
+		// Stupid answer:
+		q.counts[i] = q.bits.Count(0, newi)
 	}
-	q.offsets[i] = to
-	q.counts[i] += q.bits.Count(from, to)
 }
 
 func (q *quartileIndex) debug() string {
