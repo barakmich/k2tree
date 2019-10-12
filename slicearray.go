@@ -93,8 +93,12 @@ func (s *sliceArray) Get(at int) bool {
 
 func (s *sliceArray) String() string {
 	str := fmt.Sprintf("%d ", s.length)
-	for _, x := range s.bytes {
+	for i, x := range s.bytes {
 		str += fmt.Sprintf("%08b ", x)
+		if i > 20 {
+			str += "(first 20)"
+			break
+		}
 	}
 	return str
 }

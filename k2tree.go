@@ -1,5 +1,7 @@
 package k2tree
 
+import "fmt"
+
 // K2Tree is the main data structure for this package. It represents a compressed representation of
 // a graph adjacency matrix.
 type K2Tree struct {
@@ -19,13 +21,13 @@ func New() (*K2Tree, error) {
 
 func NewWithConfig(config Config) (*K2Tree, error) {
 	return newK2Tree(func() bitarray {
-		return newQuartileIndex(&sliceArray{})
+		return newQuartileIndex(newTraceArray(&sliceArray{}))
 	}, config)
 }
 
 func newK2Tree(sliceFunc newBitArrayFunc, config Config) (*K2Tree, error) {
 	t := sliceFunc()
-	l := sliceFunc()
+	l := &sliceArray{}
 	return &K2Tree{
 		tbits:  t,
 		lbits:  l,
@@ -69,6 +71,8 @@ func (k *K2Tree) Stats() Stats {
 		Links:        c,
 		LevelOffsets: k.levelOffsets,
 		Bytes:        bytes >> 3,
+		TDebug:       k.tbits.debug(),
+		LDebug:       k.lbits.debug(),
 	}
 }
 
@@ -78,4 +82,24 @@ type Stats struct {
 	Links        int
 	LevelOffsets []int
 	Bytes        int
+	TDebug       string
+	LDebug       string
+}
+
+func (st Stats) String() string {
+	return fmt.Sprintf(`
+Bits Per Link: %v
+Links: %d
+LevelOffsets: %v
+Bytes: %d
+TDebug: %s
+LDebug: %s
+	`,
+		st.BitsPerLink,
+		st.Links,
+		st.LevelOffsets,
+		st.Bytes,
+		st.TDebug,
+		st.LDebug,
+	)
 }

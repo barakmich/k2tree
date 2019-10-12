@@ -1,6 +1,7 @@
 package k2tree
 
 import (
+	"fmt"
 	"reflect"
 	"runtime"
 )
@@ -34,4 +35,25 @@ func assert(test bool, errstr string) {
 	if test {
 		panic(errstr)
 	}
+}
+
+type twosHistogram struct {
+	buckets [65]int
+}
+
+func (th *twosHistogram) Add(n int) {
+	if n == 0 || n == 1 {
+		th.buckets[0] += 1
+		return
+	}
+	count := 0
+	for n > 0 {
+		n = n >> 1
+		count += 1
+	}
+	th.buckets[count] += 1
+}
+
+func (th twosHistogram) String() string {
+	return fmt.Sprint(th.buckets)
 }
