@@ -45,8 +45,8 @@ func TestSimpleAdd(t *testing.T) {
 func TestSixteenBPL(t *testing.T) {
 	kk, err := NewWithConfig(
 		Config{
-			TreeLayerDef: SixteenBitsPerLayer,
-			CellLayerDef: SixteenBitsPerLayer,
+			TreeLayerDef: FourBitsPerLayer,
+			CellLayerDef: FourBitsPerLayer,
 		},
 	)
 	if err != nil {

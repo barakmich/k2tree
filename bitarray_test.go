@@ -43,6 +43,12 @@ func TestBitarrayTypes(t *testing.T) {
 			},
 			name: "QuartileIndex(sliceArray)",
 		},
+		{
+			create: func() bitarray {
+				return newInt16Index(&sliceArray{})
+			},
+			name: "Int16Index(sliceArray)",
+		},
 	}
 	for _, bitarray := range tt {
 		curFunc = bitarray.create

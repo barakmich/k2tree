@@ -121,7 +121,7 @@ func (q *quartileIndex) Insert(n int, at int) error {
 func (q *quartileIndex) adjust(i, n, at, newi int) {
 	oldi := q.offsets[i]
 
-	assert(newi < oldi, "Inserting shrunk the array?")
+	assert(newi >= oldi, "Inserting shrunk the array?")
 
 	q.offsets[i] = newi
 	if (n + at) < oldi {

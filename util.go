@@ -13,6 +13,13 @@ func max(i, j int) int {
 	return j
 }
 
+func min(i, j int) int {
+	if i < j {
+		return i
+	}
+	return j
+}
+
 func intPow(a, b int) int {
 	var result = 1
 
@@ -32,7 +39,7 @@ func GetFunctionName(i interface{}) string {
 }
 
 func assert(test bool, errstr string) {
-	if test {
+	if !test {
 		panic(errstr)
 	}
 }
@@ -55,5 +62,9 @@ func (th *twosHistogram) Add(n int) {
 }
 
 func (th twosHistogram) String() string {
-	return fmt.Sprint(th.buckets)
+	out := "\n"
+	for i, x := range th.buckets {
+		out += fmt.Sprintf("%d: %d\n", 1<<i, x)
+	}
+	return out
 }
