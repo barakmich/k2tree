@@ -86,7 +86,6 @@ func (ix *int16index) zeroCount(to int) int {
 	} else {
 		total += ix.bits.Count(i*int16Max, to)
 	}
-	assert(total == ix.bits.Count(0, to), "Debug: Counts don't match")
 	return total
 }
 
@@ -140,21 +139,8 @@ func (ix *int16index) adjust(n, at int) {
 		off := (i + 1) * int16Max
 		if at >= off {
 			continue
-		} else if (at + n) < off {
-			if off >= ix.bits.Len() {
-				// End of the line, we didn't lose anything
-				continue
-			}
-			del := ix.bits.Count(off, min(off+n, ix.bits.Len()))
-			add := 0
-			if (at + n) < (off - int16Max) {
-				add = ix.bits.Count(off-int16Max, off-int16Max+n)
-			}
-			ix.counts[i] += uint16(add - del)
-		} else {
-			c := ix.bits.Count(off-int16Max, off)
-			ix.counts[i] = uint16(c)
 		}
+		ix.counts[i] = uint16(ix.bits.Count(off-int16Max, min(off, ix.bits.Len())))
 	}
 }
 
