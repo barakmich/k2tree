@@ -3,6 +3,7 @@ package k2tree
 import (
 	"fmt"
 	"testing"
+	"time"
 )
 
 func TestSimpleAdd(t *testing.T) {
@@ -53,11 +54,14 @@ func TestSixteenBPL(t *testing.T) {
 		t.Fatal(err)
 	}
 	base := 5000000
-	for x := 0; x < 2500000; x++ {
+	td := time.Now()
+	for x := 0; x < 14000000; x++ {
 		//fmt.Println("adding", x, x)
 		kk.Add(base+x, base+x)
 		if x%100000 == 0 {
-			fmt.Println(x)
+			newt := time.Now()
+			fmt.Println(x, newt.Sub(td))
+			td = newt
 		}
 	}
 	//	fmt.Println(kk.debug())

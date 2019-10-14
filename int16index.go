@@ -80,12 +80,13 @@ func (ix *int16index) zeroCount(to int) int {
 		total += int(ix.counts[i])
 	}
 	offset := to - (i * int16Max)
-	if (offset / 2) > (int16Max / 2) {
+	if offset > (int16Max / 2) {
 		total += int(ix.counts[i])
 		total -= ix.bits.Count(to, min(ioff, ix.bits.Len()))
 	} else {
 		total += ix.bits.Count(i*int16Max, to)
 	}
+	//assert(total == ix.bits.Count(0, to), "Debug: Counts don't match")
 	return total
 }
 
@@ -119,6 +120,7 @@ func (ix *int16index) Insert(n int, at int) error {
 	} else {
 		ix.adjust(n, at)
 	}
+	//	ix.adjustBig(at)
 	return nil
 }
 
@@ -135,12 +137,25 @@ func (ix *int16index) adjustBig(at int) {
 }
 
 func (ix *int16index) adjust(n, at int) {
+	bitlen := ix.bits.Len()
 	for i := range ix.counts {
 		off := (i + 1) * int16Max
 		if at >= off {
 			continue
+		} else if (at + n) < off-int16Max {
+			if off >= bitlen {
+				// Do the last one the easy way
+				c := ix.bits.Count(off-int16Max, bitlen)
+				ix.counts[i] = uint16(c)
+				return
+			}
+			del := ix.bits.Count(off, off+n)
+			add := ix.bits.Count(off-int16Max, off-int16Max+n)
+			ix.counts[i] = uint16(int(ix.counts[i]) + add - del)
+		} else {
+			c := ix.bits.Count(off-int16Max, min(off, ix.bits.Len()))
+			ix.counts[i] = uint16(c)
 		}
-		ix.counts[i] = uint16(ix.bits.Count(off-int16Max, min(off, ix.bits.Len())))
 	}
 }
 
