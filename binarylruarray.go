@@ -3,7 +3,6 @@ package k2tree
 import (
 	"fmt"
 	"math"
-	"sort"
 )
 
 type binaryLRUIndex struct {
@@ -99,7 +98,7 @@ func (b *binaryLRUIndex) getClosestCache(to int) (count, at int) {
 	if len(b.offsets) == 0 {
 		return 0, 0
 	}
-	idx := sort.SearchInts(b.offsets, to)
+	idx := bSearch(b.offsets, to)
 	downdist := math.MaxInt64
 	if idx != 0 {
 		downdist = to - b.offsets[idx-1]
@@ -131,7 +130,7 @@ func (b *binaryLRUIndex) cacheAdd(val, at int) {
 	if len(b.offsets) >= b.size {
 		b.cacheEvict()
 	}
-	idx := sort.SearchInts(b.offsets, at)
+	idx := bSearch(b.offsets, at)
 	b.offsets = append(b.offsets, 0)
 	copy(b.offsets[idx+1:], b.offsets[idx:])
 	b.offsets[idx] = at
@@ -190,4 +189,22 @@ func (b *binaryLRUIndex) Insert(n int, at int) error {
 
 func (b *binaryLRUIndex) debug() string {
 	return fmt.Sprintf("BinaryLRUIndex:\n internal: %s, %#v", b.bits.debug(), b)
+}
+
+func bSearch(arr []int, x int) int {
+	n := len(arr)
+	// Define f(-1) == false and f(n) == true.
+	// Invariant: f(i-1) == false, f(j) == true.
+	i, j := 0, n
+	for i < j {
+		h := int(uint(i+j) >> 1) // avoid overflow when computing h
+		// i ≤ h < j
+		if arr[h] < x {
+			i = h + 1 // preserves f(i-1) == false
+		} else {
+			j = h // preserves f(j) == true
+		}
+	}
+	// i == j, f(i-1) == false, and f(j) (= f(i)) == true  =>  answer is i.
+	return i
 }
