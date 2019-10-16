@@ -1,6 +1,7 @@
 package k2tree
 
 import (
+	"container/list"
 	"fmt"
 	"math"
 )
@@ -9,7 +10,8 @@ type binaryLRUIndex struct {
 	bits         bitarray
 	offsets      []int
 	counts       []int
-	cacheHistory []int
+	cacheHistory *list.List
+	cacheLookup  map[int]*list.Element
 	size         int
 }
 
@@ -18,13 +20,15 @@ var _ bitarray = (*binaryLRUIndex)(nil)
 const (
 	PopcntMoveBits  = 10
 	PopcntCacheBits = 1024
-	PopcntMoveAfter = 1024
+	PopcntMoveAfter = 512
 )
 
 func newBinaryLRUIndex(bits bitarray, size int) *binaryLRUIndex {
 	return &binaryLRUIndex{
-		bits: bits,
-		size: size,
+		bits:         bits,
+		size:         size,
+		cacheHistory: list.New(),
+		cacheLookup:  make(map[int]*list.Element),
 	}
 }
 
@@ -129,14 +133,10 @@ func (b *binaryLRUIndex) getClosestCache(to int) (count, at, idx int) {
 }
 
 func (b *binaryLRUIndex) cacheHit(idx int) {
-	for i := 0; i < len(b.cacheHistory); i++ {
-		if b.cacheHistory[i] == idx {
-			copy(b.cacheHistory[1:i+1], b.cacheHistory[:i])
-			b.cacheHistory[0] = idx
-			return
-		}
+	e, ok := b.cacheLookup[idx]
+	if ok {
+		b.cacheHistory.MoveToFront(e)
 	}
-	panic("idx must be in cacheHistory")
 }
 
 func (b *binaryLRUIndex) cacheAdd(val, at int) {
@@ -150,26 +150,34 @@ func (b *binaryLRUIndex) cacheAdd(val, at int) {
 	b.counts = append(b.counts, 0)
 	copy(b.counts[idx+1:], b.counts[idx:])
 	b.counts[idx] = val
-	for i := 0; i < len(b.cacheHistory); i++ {
-		if b.cacheHistory[i] >= idx {
-			b.cacheHistory[i]++
+	newlookup := make(map[int]*list.Element)
+	for e := b.cacheHistory.Front(); e != nil; e = e.Next() {
+		t := e.Value.(int)
+		if e.Value.(int) >= idx {
+			t++
+			e.Value = t
 		}
+		newlookup[t] = e
 	}
-	assert(len(b.cacheHistory) <= b.size, fmt.Sprint(b.cacheHistory))
-	b.cacheHistory = append(b.cacheHistory, 0)
-	copy(b.cacheHistory[1:], b.cacheHistory)
-	b.cacheHistory[0] = idx
+	b.cacheLookup = newlookup
+	b.cacheHistory.PushFront(idx)
 }
 
 func (b *binaryLRUIndex) cacheEvict() {
 	//pop
-	todel := b.cacheHistory[len(b.cacheHistory)-1]
-	b.cacheHistory = b.cacheHistory[:len(b.cacheHistory)-1]
-	for i, v := range b.cacheHistory {
-		if v >= todel {
-			b.cacheHistory[i]--
+	lastelem := b.cacheHistory.Back()
+	todel := lastelem.Value.(int)
+	b.cacheHistory.Remove(lastelem)
+	newlookup := make(map[int]*list.Element)
+	for e := b.cacheHistory.Front(); e != nil; e = e.Next() {
+		t := e.Value.(int)
+		if t >= todel {
+			t--
+			e.Value = t
 		}
+		newlookup[t] = e
 	}
+	b.cacheLookup = newlookup
 	b.offsets = append(b.offsets[:todel], b.offsets[todel+1:]...)
 	b.counts = append(b.counts[:todel], b.counts[todel+1:]...)
 }
