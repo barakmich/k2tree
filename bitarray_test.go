@@ -49,6 +49,12 @@ func TestBitarrayTypes(t *testing.T) {
 			},
 			name: "Int16Index(sliceArray)",
 		},
+		{
+			create: func() bitarray {
+				return newBinaryLRUIndex(&sliceArray{}, 2)
+			},
+			name: "BinaryLRU(sliceArray,2)",
+		},
 	}
 	for _, bitarray := range tt {
 		curFunc = bitarray.create

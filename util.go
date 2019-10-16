@@ -20,6 +20,13 @@ func min(i, j int) int {
 	return j
 }
 
+func abs(i int) int {
+	if i < 0 {
+		return -i
+	}
+	return i
+}
+
 func intPow(a, b int) int {
 	var result = 1
 

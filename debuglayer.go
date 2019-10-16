@@ -15,14 +15,20 @@ func newDebugArray(bits bitarray) *debugArray {
 }
 
 func (d *debugArray) Count(from, to int) int {
+	fmt.Printf("** Count from: %d to: %d ", from, to)
 	res := d.bitarray.Count(from, to)
-	fmt.Printf("** Count from: %d to: %d return: %d\n", from, to, res)
+	fmt.Printf("return: %d\n", res)
 	return res
 }
 
 func (d *debugArray) Insert(n, at int) error {
 	fmt.Printf("** Insert n: %d at: %d\n", n, at)
 	return d.bitarray.Insert(n, at)
+}
+
+func (d *debugArray) Set(n int, val bool) {
+	fmt.Printf("** Set n: %d val: %v\n", n, val)
+	d.bitarray.Set(n, val)
 }
 
 func (d *debugArray) debug() string {
