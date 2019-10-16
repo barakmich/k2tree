@@ -22,9 +22,7 @@ var _ bitarray = (*traceArray)(nil)
 func newTraceArray(bits bitarray) *traceArray {
 	return &traceArray{
 		bitarray: bits,
-		data: traceData{
-			CountLengthHistogram: &twosHistogram{},
-		},
+		data:     traceData{},
 	}
 }
 
@@ -33,7 +31,7 @@ func (t *traceArray) Count(from int, to int) int {
 	t.data.CountCalls += 1
 	length := to - from
 	t.data.CountLengths += uint64(length)
-	t.data.CountLengthHistogram.Add(length)
+	//t.data.CountLengthHistogram.Add(length)
 	return t.bitarray.Count(from, to)
 }
 

@@ -23,7 +23,7 @@ func NewWithConfig(config Config) (*K2Tree, error) {
 	return newK2Tree(func() bitarray {
 		//return newInt16Index(newTraceArray(&sliceArray{}))
 		//return newInt16Index(newTraceArray(newPagedSliceArray(1000000)))
-		return newBinaryLRUIndex(newTraceArray(newPagedSliceArray(1000000)), 200)
+		return newBinaryLRUIndex(newTraceArray(newPagedSliceArray(1000000)), 32)
 		//return newDebugArray(newCompareArray(&sliceArray{}, newBinaryLRUIndex(&sliceArray{}, 200)))
 		//return newDebugArray(newInt16Index(newTraceArray(&sliceArray{})))
 		//return newCompareArray(&sliceArray{}, newInt16Index(&sliceArray{}))

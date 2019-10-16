@@ -15,7 +15,11 @@ type binaryLRUIndex struct {
 
 var _ bitarray = (*binaryLRUIndex)(nil)
 
-const PopcntCacheBits = 1024
+const (
+	PopcntMoveBits  = 10
+	PopcntCacheBits = 1024
+	PopcntMoveAfter = 1024
+)
 
 func newBinaryLRUIndex(bits bitarray, size int) *binaryLRUIndex {
 	return &binaryLRUIndex{
@@ -64,41 +68,50 @@ func (b *binaryLRUIndex) Count(from int, to int) int {
 		return 0
 	}
 	var subresult int
-	result, cacheit := b.zeroCount(to)
-	if cacheit {
-		b.cacheAdd(result, to)
-	}
+	result := b.zeroCount(to)
 	if from != 0 {
-		subresult, cacheit = b.zeroCount(from)
-		if cacheit {
-			b.cacheAdd(subresult, from)
-		}
+		subresult = b.zeroCount(from)
 		result = result - subresult
 	}
 	return result
 }
 
-func (b *binaryLRUIndex) zeroCount(to int) (int, bool) {
-	cacheit := false
-	count, at := b.getClosestCache(to)
-	if abs(to-at) > PopcntCacheBits {
-		cacheit = true
-
-	}
+func (b *binaryLRUIndex) zeroCount(to int) int {
+	count, at, idx := b.getClosestCache(to)
+	var val int
 	if at == to {
-		return count, cacheit
+		return count
 	} else if at < to {
-		return count + b.bits.Count(at, to), cacheit
+		val = count + b.bits.Count(at, to)
 	} else {
-		return count - b.bits.Count(to, at), cacheit
+		val = count - b.bits.Count(to, at)
 	}
+
+	// Update the cache
+	if abs(to-at) > PopcntCacheBits {
+		// If we're far away, add it to the cache
+		b.cacheAdd(val, to)
+	} else if abs(to-at) < PopcntMoveBits && to > PopcntMoveAfter {
+		// Move the value in the cache to the one just computed.
+		b.cacheMove(idx, to, val)
+	}
+
+	return val
 }
 
-func (b *binaryLRUIndex) getClosestCache(to int) (count, at int) {
-	if len(b.offsets) == 0 {
-		return 0, 0
+func (b *binaryLRUIndex) cacheMove(idx, to, val int) {
+	if idx < 0 {
+		return
 	}
-	idx := bSearch(b.offsets, to)
+	b.counts[idx] = val
+	b.offsets[idx] = to
+}
+
+func (b *binaryLRUIndex) getClosestCache(to int) (count, at, idx int) {
+	if len(b.offsets) == 0 {
+		return 0, 0, -1
+	}
+	idx = bSearch(b.offsets, to)
 	downdist := math.MaxInt64
 	if idx != 0 {
 		downdist = to - b.offsets[idx-1]
@@ -109,17 +122,17 @@ func (b *binaryLRUIndex) getClosestCache(to int) (count, at int) {
 	}
 	if downdist < updist {
 		b.cacheHit(idx - 1)
-		return b.counts[idx-1], b.offsets[idx-1]
+		return b.counts[idx-1], b.offsets[idx-1], idx - 1
 	}
 	b.cacheHit(idx)
-	return b.counts[idx], b.offsets[idx]
+	return b.counts[idx], b.offsets[idx], idx
 }
 
 func (b *binaryLRUIndex) cacheHit(idx int) {
-	for i := len(b.cacheHistory) - 1; i >= 0; i-- {
+	for i := 0; i < len(b.cacheHistory); i++ {
 		if b.cacheHistory[i] == idx {
-			cut := append(b.cacheHistory[:i], b.cacheHistory[i+1:]...)
-			b.cacheHistory = append(cut, idx)
+			copy(b.cacheHistory[1:i+1], b.cacheHistory[:i])
+			b.cacheHistory[0] = idx
 			return
 		}
 	}
@@ -143,13 +156,15 @@ func (b *binaryLRUIndex) cacheAdd(val, at int) {
 		}
 	}
 	assert(len(b.cacheHistory) <= b.size, fmt.Sprint(b.cacheHistory))
-	b.cacheHistory = append(b.cacheHistory, idx)
+	b.cacheHistory = append(b.cacheHistory, 0)
+	copy(b.cacheHistory[1:], b.cacheHistory)
+	b.cacheHistory[0] = idx
 }
 
 func (b *binaryLRUIndex) cacheEvict() {
 	//pop
-	todel := b.cacheHistory[0]
-	b.cacheHistory = b.cacheHistory[1:]
+	todel := b.cacheHistory[len(b.cacheHistory)-1]
+	b.cacheHistory = b.cacheHistory[:len(b.cacheHistory)-1]
 	for i, v := range b.cacheHistory {
 		if v >= todel {
 			b.cacheHistory[i]--
