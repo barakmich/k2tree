@@ -117,7 +117,7 @@ func (b *binaryLRUIndex) getClosestCache(to int) (count, at int) {
 }
 
 func (b *binaryLRUIndex) cacheHit(idx int) {
-	for i := 0; i < len(b.cacheHistory); i++ {
+	for i := len(b.cacheHistory) - 1; i >= 0; i-- {
 		if b.cacheHistory[i] == idx {
 			cut := append(b.cacheHistory[:i], b.cacheHistory[i+1:]...)
 			b.cacheHistory = append(cut, idx)
