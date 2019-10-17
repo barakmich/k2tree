@@ -104,32 +104,52 @@ LDebug: %s
 	)
 }
 
+func (k *K2Tree) printLevel(l, highlight int) {
+	fmt.Printf("Level %d:\n", l)
+	end := k.levelOffsets[l-1]
+	if end == 0 {
+		end = k.tbits.Len()
+	}
+	for i := k.levelOffsets[l]; i < end; i++ {
+		if highlight == i {
+			fmt.Printf("\033[1;31m")
+		}
+		if k.tbits.Get(i) {
+			fmt.Printf("1")
+		} else {
+			fmt.Printf("0")
+		}
+		if highlight == i {
+			fmt.Printf("\033[0m")
+		}
+		if i%k.tk.bitsPerLayer == k.tk.bitsPerLayer-1 {
+			fmt.Printf(" | ")
+		}
+	}
+	fmt.Printf("\n")
+
+}
 func (k *K2Tree) printTree() {
 	fmt.Println(k.levelOffsets, k.maxIndex())
 	for l := k.levels; l >= 1; l-- {
-		fmt.Printf("Level %d:\n", l)
-		end := k.levelOffsets[l-1]
-		if end == 0 {
-			end = k.tbits.Len()
-		}
-		for i := k.levelOffsets[l]; i < end; i++ {
-			if k.tbits.Get(i) {
-				fmt.Printf("1")
-			} else {
-				fmt.Printf("0")
-			}
-			if i%k.tk.bitsPerLayer == k.tk.bitsPerLayer-1 {
-				fmt.Printf(" | ")
-			}
-		}
-		fmt.Printf("\n")
+		k.printLevel(l, -1)
 	}
+	k.printBase(-1)
+}
+
+func (k *K2Tree) printBase(highlight int) {
 	fmt.Printf("Base:\n")
 	for i := 0; i < k.lbits.Len(); i++ {
+		if highlight == i {
+			fmt.Printf("\033[1;32m")
+		}
 		if k.lbits.Get(i) {
 			fmt.Printf("1")
 		} else {
 			fmt.Printf("0")
+		}
+		if highlight == i {
+			fmt.Printf("\033[0m")
 		}
 		if i%k.lk.bitsPerLayer == k.lk.bitsPerLayer-1 {
 			fmt.Printf(" | ")
