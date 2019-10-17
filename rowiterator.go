@@ -1,7 +1,5 @@
 package k2tree
 
-import "fmt"
-
 type RowIterator struct {
 	tree   *K2Tree
 	offset int
@@ -38,7 +36,6 @@ func (it *RowIterator) getNext(off int) int {
 func (it *RowIterator) getNextOnLevel(level, sublayeroff, val int) int {
 	// Invariant: Returned int must be >= val if the value is found or
 	// -1 if the function reaches the end of the run of bits.
-	fmt.Println("gnolevel", "level:", level, "sublayeroff:", sublayeroff, "val:", val)
 	if level == 0 {
 		return it.getNextOnLeaf(sublayeroff, val)
 	}
@@ -47,11 +44,9 @@ func (it *RowIterator) getNextOnLevel(level, sublayeroff, val int) int {
 	levelStart := it.tree.levelOffsets[level]
 	offInRun := it.tree.offsetTForLayer(it.row, val, level)
 	var newoffinrun int
-	fmt.Println("startrun", startRun, "levelStart", levelStart, "offInRun", offInRun)
 
 	for {
 		bitoff := levelStart + startRun + offInRun
-		it.tree.printLevel(level, bitoff)
 		if it.tree.tbits.Get(bitoff) {
 			count := it.tree.tbits.Count(levelStart, bitoff)
 			r := it.getNextOnLevel(level-1, count, val)
@@ -69,19 +64,16 @@ func (it *RowIterator) getNextOnLevel(level, sublayeroff, val int) int {
 }
 
 func (it *RowIterator) getNextOnLeaf(leaflayercount, try int) int {
-	fmt.Println("gnolayer", leaflayercount, try)
 	leafoffset := leaflayercount * it.tree.lk.bitsPerLayer
-	bitoff := try & it.tree.lk.maskPerLayer
+	bitoff := it.tree.offsetL(it.row, try)
 	for {
 		// Test
-		it.tree.printBase(leafoffset + bitoff)
 		if it.tree.lbits.Get(leafoffset + bitoff) {
 			return try
 		}
 		// Increment on this layer
 		try++
-		bitoff++
-		newbitoff := bitoff & it.tree.lk.maskPerLayer
+		newbitoff := it.tree.offsetL(it.row, try)
 		// See if we've run off the edge
 		if newbitoff < bitoff {
 			return -1

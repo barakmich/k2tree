@@ -1,7 +1,6 @@
 package k2tree
 
 import (
-	"fmt"
 	"sort"
 	"testing"
 )
@@ -27,11 +26,11 @@ func TestRowIterator(t *testing.T) {
 		row      int
 		expected []int
 	}{
-		//{
-		//loadtree: simpleLoad,
-		//row:      20,
-		//expected: []int{1, 2, 14, 17, 30, 41},
-		//},
+		{
+			loadtree: simpleLoad,
+			row:      20,
+			expected: []int{1, 2, 14, 17, 30, 41},
+		},
 		{
 			loadtree: simpleLoad,
 			row:      41,
@@ -45,7 +44,6 @@ func TestRowIterator(t *testing.T) {
 			t.Fatal(err)
 		}
 		test.loadtree(k2)
-		fmt.Println(k2.Stats())
 		it := newRowIterator(k2, test.row)
 		var out []int
 		for it.Next() {
