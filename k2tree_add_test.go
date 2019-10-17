@@ -55,7 +55,7 @@ func TestSixteenBPL(t *testing.T) {
 	}
 	base := 5000000
 	td := time.Now()
-	for x := 0; x < 14000000; x++ {
+	for x := 0; x < 1400000; x++ {
 		//fmt.Println("adding", x, x)
 		kk.Add(base+x, base+x)
 		if x%100000 == 0 {

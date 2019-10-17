@@ -45,6 +45,12 @@ func (k *K2Tree) offsetTForLayer(i int, j int, l int) int {
 	return (x * k.tk.kPerLayer) + y
 }
 
+// Increment n by the amt
+func (k *K2Tree) incrementNForLevel(n int, amt int, l int) int {
+	spl := uint(l-1)*(k.tk.shiftPerLayer) + k.lk.shiftPerLayer
+	return ((n >> spl) + amt) << spl
+}
+
 // returns the suboffset within the index of the lower bit layer
 func (k *K2Tree) offsetL(i int, j int) int {
 	return ((i & k.lk.maskPerLayer) * k.lk.kPerLayer) + (j & k.lk.maskPerLayer)
