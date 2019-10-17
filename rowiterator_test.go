@@ -1,6 +1,8 @@
 package k2tree
 
 import (
+	"fmt"
+	"math/rand"
 	"sort"
 	"testing"
 )
@@ -44,6 +46,7 @@ func TestRowIterator(t *testing.T) {
 			t.Fatal(err)
 		}
 		test.loadtree(k2)
+		fmt.Println(k2.Stats())
 		it := newRowIterator(k2, test.row)
 		var out []int
 		for it.Next() {
@@ -60,4 +63,80 @@ func TestRowIterator(t *testing.T) {
 		}
 
 	}
+}
+
+func BenchmarkExtract20Slice(b *testing.B) {
+	k2, err := newK2Tree(func() bitarray { return &sliceArray{} }, DefaultConfig)
+	if err != nil {
+		b.Fatal(err)
+	}
+	simpleLoad(k2)
+	runExtractVal(b, k2, 20)
+}
+
+func BenchmarkExtract20LRU(b *testing.B) {
+	k2, err := newK2Tree(func() bitarray { return newBinaryLRUIndex(&sliceArray{}, 20) }, DefaultConfig)
+	if err != nil {
+		b.Fatal(err)
+	}
+	simpleLoad(k2)
+	runExtractVal(b, k2, 20)
+}
+
+//func BenchmarkExtract50kMaxRowSlice(b *testing.B) {
+//k2, err := newK2Tree(func() bitarray { return &sliceArray{} }, DefaultConfig)
+//if err != nil {
+//b.Fatal(err)
+//}
+//maxrow, _ := populateRandomTree(50000, 25000, k2)
+//runExtractVal(b, k2, maxrow)
+//}
+
+func BenchmarkExtract50k(b *testing.B) {
+	k2, err := newK2Tree(func() bitarray { return newBinaryLRUIndex(&sliceArray{}, 20) }, DefaultConfig)
+	if err != nil {
+		b.Fatal(err)
+	}
+	maxrow, _ := populateRandomTree(50000, 25000, k2)
+	b.Run("50kMaxRowLRU", func(b *testing.B) {
+		runExtractVal(b, k2, maxrow)
+	})
+}
+
+func runExtractVal(b *testing.B, k2 *K2Tree, val int) {
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		it := newRowIterator(k2, val)
+		var out []int
+		for it.Next() {
+			out = append(out, it.Value())
+		}
+	}
+}
+
+func populateRandomTree(nLinks, maxID int, k2 *K2Tree) (maxrow int, maxcol int) {
+	fmt.Println("Populating Tree...")
+	rowcnt := make(map[int]int)
+	colcnt := make(map[int]int)
+
+	for i := 0; i < nLinks; i++ {
+		row := rand.Intn(maxID)
+		col := rand.Intn(maxID)
+		k2.Add(row, col)
+	}
+
+	maxrowcnt := 0
+	for k, v := range rowcnt {
+		if v > maxrowcnt {
+			maxrow = k
+		}
+	}
+
+	maxcolcnt := 0
+	for k, v := range colcnt {
+		if v > maxcolcnt {
+			maxcol = k
+		}
+	}
+	return
 }
