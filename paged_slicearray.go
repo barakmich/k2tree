@@ -1,6 +1,8 @@
 package k2tree
 
 import (
+	"fmt"
+
 	popcount "github.com/tmthrgd/go-popcount"
 )
 
@@ -112,8 +114,10 @@ func (p *pagedSliceArray) Insert(n int, at int) error {
 		return page.Insert(n, at)
 	}
 	l := len(page.bytes) / 2
+	newbytes := make([]byte, l)
+	copy(newbytes, page.bytes[:l])
 	newpage := &sliceArray{
-		bytes:  page.bytes[:l],
+		bytes:  newbytes,
 		length: l * 8,
 		total:  int(popcount.CountBytes(page.bytes[:l])),
 	}
@@ -126,8 +130,8 @@ func (p *pagedSliceArray) Insert(n int, at int) error {
 
 func (p *pagedSliceArray) debug() string {
 	s := ""
-	//for i, x := range p.arrays {
-	//s += fmt.Sprintf("Array[%d]:\n%s\n", i, x.debug())
-	//}
+	for i, x := range p.arrays {
+		s += fmt.Sprintf("Array[%d]:\n%s\n", i, x.debug())
+	}
 	return s
 }

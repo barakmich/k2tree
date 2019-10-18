@@ -82,3 +82,11 @@ func (it *RowIterator) getNextOnLeaf(leaflayercount, try int) int {
 	}
 
 }
+
+func (it *RowIterator) ExtractAll() []int {
+	var out []int
+	for it.Next() {
+		out = append(out, it.Value())
+	}
+	return out
+}

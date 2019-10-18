@@ -46,7 +46,6 @@ func TestRowIterator(t *testing.T) {
 			t.Fatal(err)
 		}
 		test.loadtree(k2)
-		fmt.Println(k2.Stats())
 		it := newRowIterator(k2, test.row)
 		var out []int
 		for it.Next() {
@@ -92,16 +91,16 @@ func BenchmarkExtract20LRU(b *testing.B) {
 //runExtractVal(b, k2, maxrow)
 //}
 
-func BenchmarkExtract50k(b *testing.B) {
-	k2, err := newK2Tree(func() bitarray { return newBinaryLRUIndex(newPagedSliceArray(100000), 20) }, Config{
+func BenchmarkExtract250k(b *testing.B) {
+	k2, err := newK2Tree(func() bitarray { return newPagedSliceArray(100000) }, Config{
 		TreeLayerDef: SixteenBitsPerLayer,
 		CellLayerDef: FourBitsPerLayer,
 	})
 	if err != nil {
 		b.Fatal(err)
 	}
-	maxrow, _ := populateRandomTree(500000, 500000, k2)
-	b.Run("50kMaxRowLRU", func(b *testing.B) {
+	maxrow, _ := populateRandomTree(250000, 500000, k2)
+	b.Run("250kMaxRowLRU", func(b *testing.B) {
 		runExtractVal(b, k2, maxrow)
 	})
 }
@@ -123,7 +122,7 @@ func populateRandomTree(nLinks, maxID int, k2 *K2Tree) (maxrow int, maxcol int) 
 	colcnt := make(map[int]int)
 
 	for i := 0; i < nLinks; i++ {
-		if i%1000 == 0 {
+		if i%10000 == 0 {
 			fmt.Println(i)
 		}
 		row := rand.Intn(maxID)

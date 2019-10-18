@@ -157,3 +157,7 @@ func (k *K2Tree) printBase(highlight int) {
 	}
 	fmt.Printf("\n")
 }
+
+func (k *K2Tree) Row(row int) *RowIterator {
+	return newRowIterator(k, row)
+}

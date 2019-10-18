@@ -7,59 +7,67 @@ import (
 
 var curFunc newBitArrayFunc
 
-var testFuncs []func(t *testing.T) = []func(t *testing.T){
-	testSmoke,
-	testEasyInsert,
-	testByteInsert,
-	testNibbleInsert,
+type testFunc struct {
+	testcase func(t *testing.T)
+	name     string
+}
+
+type bitArrayType struct {
+	create newBitArrayFunc
+	name   string
+}
+
+var testFuncs []testFunc = []testFunc{
+	{testSmoke, "TestSmoke"},
+	{testEasyInsert, "TestEasyInsert"},
+	{testByteInsert, "TestByteInsert"},
+	{testNibbleInsert, "TestNibbleInsert"},
+}
+
+var testBitArrayTypes []bitArrayType = []bitArrayType{
+	{
+		create: func() bitarray {
+			return &sliceArray{}
+		},
+		name: "SliceArray",
+	},
+	{
+		create: func() bitarray {
+			return newPagedSliceArray(10)
+		},
+		name: "PagedSlice10",
+	},
+	{
+		create: func() bitarray {
+			return newPagedSliceArray(1000)
+		},
+		name: "PagedSlice1000",
+	},
+	{
+		create: func() bitarray {
+			return newQuartileIndex(&sliceArray{})
+		},
+		name: "QuartileIndex",
+	},
+	{
+		create: func() bitarray {
+			return newInt16Index(&sliceArray{})
+		},
+		name: "Int16Index",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(&sliceArray{}, 2)
+		},
+		name: "BinaryLRU2",
+	},
 }
 
 func TestBitarrayTypes(t *testing.T) {
-	tt := []struct {
-		create newBitArrayFunc
-		name   string
-	}{
-		{
-			create: func() bitarray {
-				return &sliceArray{}
-			},
-			name: "SliceArray",
-		},
-		{
-			create: func() bitarray {
-				return newPagedSliceArray(10)
-			},
-			name: "PagedSlice(10)",
-		},
-		{
-			create: func() bitarray {
-				return newPagedSliceArray(1000)
-			},
-			name: "PagedSlice(1000)",
-		},
-		{
-			create: func() bitarray {
-				return newQuartileIndex(&sliceArray{})
-			},
-			name: "QuartileIndex(sliceArray)",
-		},
-		{
-			create: func() bitarray {
-				return newInt16Index(&sliceArray{})
-			},
-			name: "Int16Index(sliceArray)",
-		},
-		{
-			create: func() bitarray {
-				return newBinaryLRUIndex(&sliceArray{}, 2)
-			},
-			name: "BinaryLRU(sliceArray,2)",
-		},
-	}
-	for _, bitarray := range tt {
+	for _, bitarray := range testBitArrayTypes {
 		curFunc = bitarray.create
 		for _, testcase := range testFuncs {
-			t.Run(fmt.Sprintf("%s::%s", bitarray.name, GetFunctionName(testcase)), testcase)
+			t.Run(fmt.Sprintf("%s%s", testcase.name, bitarray.name), testcase.testcase)
 		}
 	}
 }
@@ -68,7 +76,6 @@ func testSmoke(t *testing.T) {
 	s := curFunc()
 	s.Insert(24, 0)
 	s.Set(3, true)
-	fmt.Println(s.debug())
 	if s.Count(0, 2) != 0 {
 		t.Error("wrong count")
 	}
@@ -84,7 +91,6 @@ func testSmoke(t *testing.T) {
 	for x := 0; x < 24; x++ {
 		s.Set(x, true)
 	}
-	fmt.Println(s.debug())
 	if s.Count(0, 8) != 8 {
 		t.Error("wrong count")
 	}
@@ -98,7 +104,6 @@ func testEasyInsert(t *testing.T) {
 	s.Insert(24, 0)
 	s.Set(3, true)
 	s.Insert(8, 0)
-	fmt.Println(s.debug())
 	if s.Get(3) {
 		t.Error("new 3 should not be set")
 	}
@@ -116,9 +121,7 @@ func testByteInsert(t *testing.T) {
 	s.Set(11, true)
 	s.Set(6, true)
 	s.Set(2, true)
-	fmt.Println(s.debug())
 	s.Insert(8, 4)
-	fmt.Println(s.debug())
 	if s.Get(11) {
 		t.Error("new 11 should not be set")
 	}
@@ -140,9 +143,7 @@ func testNibbleInsert(t *testing.T) {
 	s.Set(11, true)
 	s.Set(6, true)
 	s.Set(2, true)
-	fmt.Println(s.debug())
 	s.Insert(4, 4)
-	fmt.Println(s.debug())
 	if s.Get(11) {
 		t.Error("new 11 should not be set")
 	}
@@ -164,7 +165,6 @@ func testNibbleInsertAtZero(t *testing.T) {
 	s.Set(3, true)
 	s.Set(0, true)
 	s.Insert(4, 0)
-	fmt.Println(s.debug())
 	if s.Get(0) {
 		t.Error("got a wrong 0")
 	}
