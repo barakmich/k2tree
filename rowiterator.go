@@ -1,20 +1,31 @@
 package k2tree
 
-type RowIterator struct {
+type Iterator struct {
 	tree   *K2Tree
 	offset int
-	row    int
+	rowcol int
+	isRow  bool
 }
 
-func newRowIterator(tree *K2Tree, row int) *RowIterator {
-	return &RowIterator{
+func newRowIterator(tree *K2Tree, row int) *Iterator {
+	return &Iterator{
 		tree:   tree,
 		offset: -1,
-		row:    row,
+		rowcol: row,
+		isRow:  true,
 	}
 }
 
-func (it *RowIterator) Next() bool {
+func newColumnIterator(tree *K2Tree, col int) *Iterator {
+	return &Iterator{
+		tree:   tree,
+		offset: -1,
+		rowcol: col,
+		isRow:  false,
+	}
+}
+
+func (it *Iterator) Next() bool {
 	it.offset = it.getNext(it.offset)
 	if it.offset != -1 {
 		return true
@@ -22,18 +33,18 @@ func (it *RowIterator) Next() bool {
 	return false
 }
 
-func (it *RowIterator) Value() int {
+func (it *Iterator) Value() int {
 	return it.offset
 }
 
-func (it *RowIterator) getNext(off int) int {
+func (it *Iterator) getNext(off int) int {
 	try := off + 1
 	levels := it.tree.levels
 	nextval := it.getNextOnLevel(levels, 0, try)
 	return nextval
 }
 
-func (it *RowIterator) getNextOnLevel(level, sublayeroff, val int) int {
+func (it *Iterator) getNextOnLevel(level, sublayeroff, val int) int {
 	// Invariant: Returned int must be >= val if the value is found or
 	// -1 if the function reaches the end of the run of bits.
 	if level == 0 {
@@ -42,7 +53,12 @@ func (it *RowIterator) getNextOnLevel(level, sublayeroff, val int) int {
 
 	startRun := sublayeroff * it.tree.tk.bitsPerLayer
 	levelStart := it.tree.levelOffsets[level]
-	offInRun := it.tree.offsetTForLayer(it.row, val, level)
+	var offInRun int
+	if it.isRow {
+		offInRun = it.tree.offsetTForLayer(it.rowcol, val, level)
+	} else {
+		offInRun = it.tree.offsetTForLayer(val, it.rowcol, level)
+	}
 	var newoffinrun int
 
 	for {
@@ -54,8 +70,12 @@ func (it *RowIterator) getNextOnLevel(level, sublayeroff, val int) int {
 				return r
 			}
 		}
-		val = it.tree.incrementNForLevel(val, 1, level)
-		newoffinrun = it.tree.offsetTForLayer(it.row, val, level)
+		if it.isRow {
+			val = it.tree.incrementNForLevel(val, 1, level)
+			newoffinrun = it.tree.offsetTForLayer(it.rowcol, val, level)
+		} else {
+			panic("Is Column")
+		}
 		if newoffinrun < offInRun {
 			return -1
 		}
@@ -63,17 +83,26 @@ func (it *RowIterator) getNextOnLevel(level, sublayeroff, val int) int {
 	}
 }
 
-func (it *RowIterator) getNextOnLeaf(leaflayercount, try int) int {
+func (it *Iterator) getNextOnLeaf(leaflayercount, try int) int {
 	leafoffset := leaflayercount * it.tree.lk.bitsPerLayer
-	bitoff := it.tree.offsetL(it.row, try)
+	var bitoff, newbitoff int
+	if it.isRow {
+		bitoff = it.tree.offsetL(it.rowcol, try)
+	} else {
+		bitoff = it.tree.offsetL(try, it.rowcol)
+	}
 	for {
 		// Test
 		if it.tree.lbits.Get(leafoffset + bitoff) {
 			return try
 		}
 		// Increment on this layer
-		try++
-		newbitoff := it.tree.offsetL(it.row, try)
+		if it.isRow {
+			try++
+			newbitoff = it.tree.offsetL(it.rowcol, try)
+		} else {
+			panic("Is column")
+		}
 		// See if we've run off the edge
 		if newbitoff < bitoff {
 			return -1
@@ -83,7 +112,7 @@ func (it *RowIterator) getNextOnLeaf(leaflayercount, try int) int {
 
 }
 
-func (it *RowIterator) ExtractAll() []int {
+func (it *Iterator) ExtractAll() []int {
 	var out []int
 	for it.Next() {
 		out = append(out, it.Value())
