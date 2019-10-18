@@ -93,7 +93,7 @@ func (b *binaryLRUIndex) zeroCount(to int) int {
 	if abs(to-at) > PopcntCacheBits {
 		// If we're far away, add it to the cache
 		b.cacheAdd(val, to)
-	} else if abs(to-at) < PopcntMoveBits && to > PopcntMoveAfter {
+	} else if abs(to-at) < PopcntMoveBits && to > PopcntMoveAfter && false {
 		// Move the value in the cache to the one just computed.
 		b.cacheMove(idx, to, val)
 	}
