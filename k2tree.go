@@ -71,8 +71,6 @@ func (k *K2Tree) Stats() Stats {
 		Links:        c,
 		LevelOffsets: k.levelOffsets,
 		Bytes:        bytes >> 3,
-		TDebug:       k.tbits.debug(),
-		LDebug:       k.lbits.debug(),
 	}
 }
 
@@ -158,6 +156,6 @@ func (k *K2Tree) printBase(highlight int) {
 	fmt.Printf("\n")
 }
 
-func (k *K2Tree) Row(row int) *RowIterator {
+func (k *K2Tree) Row(row int) *Iterator {
 	return newRowIterator(k, row)
 }

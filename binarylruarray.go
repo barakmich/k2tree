@@ -17,9 +17,7 @@ type binaryLRUIndex struct {
 var _ bitarray = (*binaryLRUIndex)(nil)
 
 const (
-	PopcntMoveBits  = 10
 	PopcntCacheBits = 1024
-	PopcntMoveAfter = 512
 )
 
 func newBinaryLRUIndex(bits bitarray, size int) *binaryLRUIndex {
@@ -79,7 +77,7 @@ func (b *binaryLRUIndex) Count(from int, to int) int {
 }
 
 func (b *binaryLRUIndex) zeroCount(to int) int {
-	count, at, idx := b.getClosestCache(to)
+	count, at, _ := b.getClosestCache(to)
 	var val int
 	if at == to {
 		return count
@@ -93,20 +91,9 @@ func (b *binaryLRUIndex) zeroCount(to int) int {
 	if abs(to-at) > PopcntCacheBits {
 		// If we're far away, add it to the cache
 		b.cacheAdd(val, to)
-	} else if abs(to-at) < PopcntMoveBits && to > PopcntMoveAfter && false {
-		// Move the value in the cache to the one just computed.
-		b.cacheMove(idx, to, val)
 	}
 
 	return val
-}
-
-func (b *binaryLRUIndex) cacheMove(idx, to, val int) {
-	if idx < 0 {
-		return
-	}
-	b.counts[idx] = val
-	b.offsets[idx] = to
 }
 
 func (b *binaryLRUIndex) getClosestCache(to int) (count, at, idx int) {

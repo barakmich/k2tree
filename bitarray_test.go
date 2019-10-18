@@ -67,6 +67,12 @@ var testBitArrayTypes []bitArrayType = []bitArrayType{
 		},
 		name: "LRU128Paged50k",
 	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(newPagedSliceArray(100000), 128)
+		},
+		name: "LRU128Paged1M",
+	},
 }
 
 func TestBitarrayTypes(t *testing.T) {
