@@ -11,7 +11,6 @@ type binaryLRUIndex struct {
 	offsets      []int
 	counts       []int
 	cacheHistory *list.List
-	cacheLookup  map[int]*list.Element
 	size         int
 }
 
@@ -28,7 +27,6 @@ func newBinaryLRUIndex(bits bitarray, size int) *binaryLRUIndex {
 		bits:         bits,
 		size:         size,
 		cacheHistory: list.New(),
-		cacheLookup:  make(map[int]*list.Element),
 	}
 }
 
@@ -133,9 +131,11 @@ func (b *binaryLRUIndex) getClosestCache(to int) (count, at, idx int) {
 }
 
 func (b *binaryLRUIndex) cacheHit(idx int) {
-	e, ok := b.cacheLookup[idx]
-	if ok {
-		b.cacheHistory.MoveToFront(e)
+	for e := b.cacheHistory.Front(); e != nil; e = e.Next() {
+		if e.Value.(int) == idx {
+			b.cacheHistory.MoveToFront(e)
+			return
+		}
 	}
 }
 
@@ -150,16 +150,13 @@ func (b *binaryLRUIndex) cacheAdd(val, at int) {
 	b.counts = append(b.counts, 0)
 	copy(b.counts[idx+1:], b.counts[idx:])
 	b.counts[idx] = val
-	newlookup := make(map[int]*list.Element)
 	for e := b.cacheHistory.Front(); e != nil; e = e.Next() {
 		t := e.Value.(int)
 		if e.Value.(int) >= idx {
 			t++
 			e.Value = t
 		}
-		newlookup[t] = e
 	}
-	b.cacheLookup = newlookup
 	b.cacheHistory.PushFront(idx)
 }
 
@@ -168,16 +165,13 @@ func (b *binaryLRUIndex) cacheEvict() {
 	lastelem := b.cacheHistory.Back()
 	todel := lastelem.Value.(int)
 	b.cacheHistory.Remove(lastelem)
-	newlookup := make(map[int]*list.Element)
 	for e := b.cacheHistory.Front(); e != nil; e = e.Next() {
 		t := e.Value.(int)
 		if t >= todel {
 			t--
 			e.Value = t
 		}
-		newlookup[t] = e
 	}
-	b.cacheLookup = newlookup
 	b.offsets = append(b.offsets[:todel], b.offsets[todel+1:]...)
 	b.counts = append(b.counts[:todel], b.counts[todel+1:]...)
 }

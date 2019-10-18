@@ -29,13 +29,13 @@ var testBitArrayTypes []bitArrayType = []bitArrayType{
 		create: func() bitarray {
 			return &sliceArray{}
 		},
-		name: "SliceArray",
+		name: "Slice",
 	},
 	{
 		create: func() bitarray {
 			return newPagedSliceArray(1000)
 		},
-		name: "PagedSlice1000",
+		name: "Paged1k",
 	},
 	{
 		create: func() bitarray {
@@ -47,19 +47,25 @@ var testBitArrayTypes []bitArrayType = []bitArrayType{
 		create: func() bitarray {
 			return newInt16Index(&sliceArray{})
 		},
-		name: "Int16Index",
+		name: "Int16",
 	},
 	{
 		create: func() bitarray {
 			return newBinaryLRUIndex(&sliceArray{}, 2)
 		},
-		name: "BinaryLRU2",
+		name: "LRU2",
 	},
 	{
 		create: func() bitarray {
 			return newBinaryLRUIndex(&sliceArray{}, 128)
 		},
-		name: "BinaryLRU128",
+		name: "LRU128",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(newPagedSliceArray(50000), 128)
+		},
+		name: "LRU128Paged50k",
 	},
 }
 
