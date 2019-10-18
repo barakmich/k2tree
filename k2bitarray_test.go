@@ -1,53 +1,50 @@
 package k2tree
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestPopulate50k(t *testing.T) {
-	tt := []struct {
-		create newBitArrayFunc
-		name   string
-	}{
-		{
-			create: func() bitarray {
-				return &sliceArray{}
-			},
-			name: "SliceArray",
-		},
-		{
-			create: func() bitarray {
-				return newPagedSliceArray(1000)
-			},
-			name: "PagedSlice1000",
-		},
-		{
-			create: func() bitarray {
-				return newQuartileIndex(&sliceArray{})
-			},
-			name: "QuartileIndex",
-		},
-		{
-			create: func() bitarray {
-				return newInt16Index(&sliceArray{})
-			},
-			name: "Int16Index",
-		},
-		{
-			create: func() bitarray {
-				return newBinaryLRUIndex(&sliceArray{}, 2)
-			},
-			name: "BinaryLRU2",
-		},
+	for _, bitarray := range testBitArrayTypes {
+		t.Run(fmt.Sprintf(bitarray.name), func(t *testing.T) { testPopulate(t, bitarray.create, 50000) })
 	}
-	for _, test := range tt {
-		t.Log(test.name)
-		k2, err := newK2Tree(test.create, Config{
-			TreeLayerDef: SixteenBitsPerLayer,
-			CellLayerDef: FourBitsPerLayer,
+}
+
+func testPopulate(t testing.TB, ba newBitArrayFunc, n int) *K2Tree {
+	k2, err := newK2Tree(func() bitarray {
+		x := ba()
+		return newTraceArray(x)
+	}, Config{
+		TreeLayerDef: SixteenBitsPerLayer,
+		CellLayerDef: SixteenBitsPerLayer,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	populateRandomTree(n, n*2, k2)
+	return k2
+}
+
+func BenchmarkPopulate50k(b *testing.B) {
+	for _, bitarray := range testBitArrayTypes {
+		b.Run(fmt.Sprintf(bitarray.name), func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				k2 := testPopulate(b, bitarray.create, 50000)
+				b.SetBytes(int64(k2.tbits.(*traceArray).data.CountLengths) / 8)
+			}
 		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		populateRandomTree(50000, 50000, k2)
+	}
+}
+
+func BenchmarkPopulate100k(b *testing.B) {
+	for _, bitarray := range testBitArrayTypes {
+		b.Run(fmt.Sprintf(bitarray.name), func(b *testing.B) {
+			for n := 0; n < b.N; n++ {
+				k2 := testPopulate(b, bitarray.create, 100000)
+				b.SetBytes(int64(k2.tbits.(*traceArray).data.CountLengths) / 8)
+			}
+		})
 	}
 }
 

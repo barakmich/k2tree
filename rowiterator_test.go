@@ -1,7 +1,6 @@
 package k2tree
 
 import (
-	"fmt"
 	"math/rand"
 	"sort"
 	"testing"
@@ -117,13 +116,13 @@ func runExtractVal(b *testing.B, k2 *K2Tree, val int) {
 }
 
 func populateRandomTree(nLinks, maxID int, k2 *K2Tree) (maxrow int, maxcol int) {
-	fmt.Println("Populating Tree...")
+	//fmt.Println("Populating Tree...")
 	rowcnt := make(map[int]int)
 	colcnt := make(map[int]int)
 
 	for i := 0; i < nLinks; i++ {
 		if i%10000 == 0 {
-			fmt.Println(i)
+			//		fmt.Println(i)
 		}
 		row := rand.Intn(maxID)
 		col := rand.Intn(maxID)
