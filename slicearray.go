@@ -80,10 +80,6 @@ func (s *sliceArray) Total() int {
 	return s.total
 }
 
-func (s *sliceArray) Bytes() []byte {
-	return s.bytes
-}
-
 func (s *sliceArray) Get(at int) bool {
 	off := at >> 3
 	b := byte(at & 0x07)

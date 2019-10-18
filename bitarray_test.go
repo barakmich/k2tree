@@ -22,6 +22,28 @@ var testFuncs []testFunc = []testFunc{
 	{testEasyInsert, "TestEasyInsert"},
 	{testByteInsert, "TestByteInsert"},
 	{testNibbleInsert, "TestNibbleInsert"},
+	{testDebug, "TestDebug"},
+}
+
+var debugBitArrayTypes []bitArrayType = []bitArrayType{
+	{
+		create: func() bitarray {
+			return newCompareArray(&sliceArray{}, newPagedSliceArray(10))
+		},
+		name: "CompSlicePaged10",
+	},
+	{
+		create: func() bitarray {
+			return newTraceArray(&sliceArray{})
+		},
+		name: "Trace",
+	},
+	{
+		create: func() bitarray {
+			return newDebugArray(&sliceArray{})
+		},
+		name: "Debug",
+	},
 }
 
 var testBitArrayTypes []bitArrayType = []bitArrayType{
@@ -82,6 +104,12 @@ func TestBitarrayTypes(t *testing.T) {
 			t.Run(fmt.Sprintf("%s%s", testcase.name, bitarray.name), testcase.testcase)
 		}
 	}
+	for _, bitarray := range debugBitArrayTypes {
+		curFunc = bitarray.create
+		for _, testcase := range testFuncs {
+			t.Run(fmt.Sprintf("%s%s", testcase.name, bitarray.name), testcase.testcase)
+		}
+	}
 }
 
 func testSmoke(t *testing.T) {
@@ -108,6 +136,9 @@ func testSmoke(t *testing.T) {
 	}
 	if s.Count(0, s.Len()) != 24 {
 		t.Error("wrong count")
+	}
+	if s.Total() != 24 {
+		t.Error("wrong total")
 	}
 }
 
@@ -189,4 +220,9 @@ func testNibbleInsertAtZero(t *testing.T) {
 	if !s.Get(7) {
 		t.Error("got no 7")
 	}
+}
+
+func testDebug(t *testing.T) {
+	s := curFunc()
+	s.debug()
 }

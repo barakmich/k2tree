@@ -54,11 +54,6 @@ func (c *compareArray) Total() int {
 	return a
 }
 
-// Bytes returns the bitarray as a byte array
-func (c *compareArray) Bytes() []byte {
-	return c.baseline.Bytes()
-}
-
 // Insert extends the bitarray by `n` bits. The bits are zeroed
 // and start at index `at`. Example:
 // Initial string: 11101

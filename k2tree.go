@@ -21,13 +21,13 @@ func New() (*K2Tree, error) {
 
 func NewWithConfig(config Config) (*K2Tree, error) {
 	return newK2Tree(func() bitarray {
-		return newBinaryLRUIndex(newPagedSliceArray(1000000), 32)
+		return newBinaryLRUIndex(newPagedSliceArray(1000000), 128)
 	}, config)
 }
 
 func newK2Tree(sliceFunc newBitArrayFunc, config Config) (*K2Tree, error) {
 	t := sliceFunc()
-	l := &sliceArray{}
+	l := newSliceArray()
 	return &K2Tree{
 		tbits:  t,
 		lbits:  l,

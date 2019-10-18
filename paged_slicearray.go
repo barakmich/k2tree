@@ -87,14 +87,6 @@ func (p *pagedSliceArray) Count(from, to int) int {
 	return count
 }
 
-func (p *pagedSliceArray) Bytes() []byte {
-	var out []byte
-	for _, x := range p.arrays {
-		out = append(out, x.bytes...)
-	}
-	return out
-}
-
 func (p *pagedSliceArray) Insert(n int, at int) error {
 	if at > p.Len() {
 		panic("can't extend off the edge of the bitarray")

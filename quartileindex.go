@@ -93,11 +93,6 @@ func (q *quartileIndex) Total() int {
 	return q.bits.Total()
 }
 
-// Bytes returns the bitarray as a byte array
-func (q *quartileIndex) Bytes() []byte {
-	return q.bits.Bytes()
-}
-
 // Insert extends the bitarray by `n` bits. The bits are zeroed
 // and start at index `at`. Example:
 // Initial string: 11101

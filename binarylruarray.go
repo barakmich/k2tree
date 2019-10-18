@@ -168,11 +168,6 @@ func (b *binaryLRUIndex) Total() int {
 	return b.bits.Total()
 }
 
-// Bytes returns the bitarray as a byte array
-func (b *binaryLRUIndex) Bytes() []byte {
-	return b.bits.Bytes()
-}
-
 // Insert extends the bitarray by `n` bits. The bits are zeroed
 // and start at index `at`. Example:
 // Initial string: 11101

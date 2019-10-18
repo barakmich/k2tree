@@ -95,11 +95,6 @@ func (ix *int16index) Total() int {
 	return ix.bits.Total()
 }
 
-// Bytes returns the bitarray as a byte array
-func (ix *int16index) Bytes() []byte {
-	return ix.bits.Bytes()
-}
-
 // Insert extends the bitarray by `n` bits. The bits are zeroed
 // and start at index `at`. Example:
 // Initial string: 11101

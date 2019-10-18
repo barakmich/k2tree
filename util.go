@@ -2,8 +2,6 @@ package k2tree
 
 import (
 	"fmt"
-	"reflect"
-	"runtime"
 )
 
 func max(i, j int) int {
@@ -39,10 +37,6 @@ func intPow(a, b int) int {
 	}
 
 	return result
-}
-
-func GetFunctionName(i interface{}) string {
-	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
 }
 
 func assert(test bool, errstr string) {
