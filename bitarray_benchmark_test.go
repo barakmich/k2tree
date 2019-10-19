@@ -5,24 +5,6 @@ import (
 	"testing"
 )
 
-func TestRandPop50k(t *testing.T) {
-	for _, bitarray := range testBitArrayTypes {
-		t.Run(fmt.Sprintf(bitarray.name), func(t *testing.T) {
-			k2 := testPopulateRand(t, bitarray.create, 50000)
-			t.Logf("%f bpl", k2.Stats().BitsPerLink)
-		})
-	}
-}
-
-func TestIncPop50k(t *testing.T) {
-	for _, bitarray := range testBitArrayTypes {
-		t.Run(fmt.Sprintf(bitarray.name), func(t *testing.T) {
-			k2 := testPopulateIncremental(t, bitarray.create, 50000)
-			t.Logf("%f bpl", k2.Stats().BitsPerLink)
-		})
-	}
-}
-
 func testPopulateRand(t testing.TB, ba newBitArrayFunc, n int) *K2Tree {
 	k2, err := newK2Tree(func() bitarray {
 		x := ba()
@@ -53,6 +35,24 @@ func testPopulateIncremental(t testing.TB, ba newBitArrayFunc, n int) *K2Tree {
 	return k2
 }
 
+func TestRandPop50k(t *testing.T) {
+	for _, bitarray := range testBitArrayTypes {
+		t.Run(fmt.Sprintf(bitarray.name), func(t *testing.T) {
+			k2 := testPopulateRand(t, bitarray.create, 50000)
+			t.Logf("%f bpl", k2.Stats().BitsPerLink)
+		})
+	}
+}
+
+func TestIncPop50k(t *testing.T) {
+	for _, bitarray := range testBitArrayTypes {
+		t.Run(fmt.Sprintf(bitarray.name), func(t *testing.T) {
+			k2 := testPopulateIncremental(t, bitarray.create, 50000)
+			t.Logf("%f bpl", k2.Stats().BitsPerLink)
+		})
+	}
+}
+
 func BenchmarkRandPop50k(b *testing.B) {
 	for _, bitarray := range testBitArrayTypes {
 		b.Run(fmt.Sprintf(bitarray.name), func(b *testing.B) {
@@ -78,7 +78,7 @@ func BenchmarkRandPop100k(b *testing.B) {
 }
 
 func BenchmarkIncPop1M(b *testing.B) {
-	for _, bitarrayt := range testBitArrayTypes {
+	for _, bitarrayt := range fastBitArrayTypes {
 		b.Run(fmt.Sprintf(bitarrayt.name), func(b *testing.B) {
 			var k2 *K2Tree
 			for n := 0; n < b.N; n++ {
@@ -120,7 +120,7 @@ func BenchmarkIncPopVar(b *testing.B) {
 		},
 	}
 	for _, k2config := range tt {
-		for _, bitarrayt := range testBitArrayTypes {
+		for _, bitarrayt := range fastBitArrayTypes {
 			b.Run(fmt.Sprint(k2config.name, bitarrayt.name), func(b *testing.B) {
 				k2, err := newK2Tree(bitarrayt.create, k2config.config)
 				if err != nil {
@@ -136,31 +136,35 @@ func BenchmarkIncPopVar(b *testing.B) {
 	}
 }
 
-func TestRandAdd(t *testing.T) {
-	k2, err := newK2Tree(
-		func() bitarray {
-			return newPagedSliceArray(10)
+var fastBitArrayTypes []bitArrayType = []bitArrayType{
+	{
+		create: func() bitarray {
+			return newInt16Index(&sliceArray{})
 		},
-		Config{
-			TreeLayerDef: SixteenBitsPerLayer,
-			CellLayerDef: FourBitsPerLayer,
+		name: "Int16",
+	},
+	{
+		create: func() bitarray {
+			return newInt16Index(newPagedSliceArray(128 * 1024))
 		},
-	)
-	if err != nil {
-		t.Fatal(err)
-	}
-	k2.Add(48081, 27887)
-	k2.Add(31847, 34059)
-	k2.Add(2081, 41318)
-	k2.Add(4425, 22540)
-	k2.Add(40456, 3300)
-	tmp := k2.Row(2081).ExtractAll()
-	if len(tmp) != 1 && tmp[0] != 41318 {
-		t.Errorf("Unmatched 2081")
-	}
-	tmp = k2.Row(40456).ExtractAll()
-	if len(tmp) != 1 && tmp[0] != 3300 {
-		t.Errorf("Unmatched 40456")
-	}
-
+		name: "Int16Paged128kb",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(&sliceArray{}, 128)
+		},
+		name: "LRU128",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(newPagedSliceArray(128*1024), 128)
+		},
+		name: "LRU128Paged128kb",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(newPagedSliceArray(1024*1024*8), 128)
+		},
+		name: "LRU128Paged1MB",
+	},
 }

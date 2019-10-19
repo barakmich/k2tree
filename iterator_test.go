@@ -80,36 +80,31 @@ func BenchmarkExtract20LRU(b *testing.B) {
 	runExtractVal(b, k2, 20)
 }
 
-//func BenchmarkExtract50kMaxRowSlice(b *testing.B) {
-//k2, err := newK2Tree(func() bitarray { return &sliceArray{} }, DefaultConfig)
-//if err != nil {
-//b.Fatal(err)
-//}
-//maxrow, _ := populateRandomTree(50000, 25000, k2)
-//runExtractVal(b, k2, maxrow)
-//}
-
-func BenchmarkExtract250k(b *testing.B) {
-	k2, err := newK2Tree(func() bitarray { return newPagedSliceArray(100000) }, Config{
-		TreeLayerDef: SixteenBitsPerLayer,
-		CellLayerDef: FourBitsPerLayer,
-	})
-	if err != nil {
-		b.Fatal(err)
+func BenchmarkExtract500k(b *testing.B) {
+	for _, arraytype := range fastBitArrayTypes {
+		k2, err := newK2Tree(arraytype.create, Config{
+			TreeLayerDef: SixteenBitsPerLayer,
+			CellLayerDef: SixteenBitsPerLayer,
+		})
+		if err != nil {
+			b.Fatal(err)
+		}
+		maxrow, _ := populateRandomTree(500000, 25000, k2)
+		b.Run(arraytype.name, func(b *testing.B) {
+			runExtractVal(b, k2, maxrow)
+		})
 	}
-	maxrow, _ := populateRandomTree(250000, 500000, k2)
-	b.Run("250kMaxRowLRU", func(b *testing.B) {
-		runExtractVal(b, k2, maxrow)
-	})
 }
 
 func runExtractVal(b *testing.B, k2 *K2Tree, val int) {
 	b.ResetTimer()
+	var out []int
 	for n := 0; n < b.N; n++ {
+		out = nil
 		it := newRowIterator(k2, val)
-		var out []int
 		for it.Next() {
 			out = append(out, it.Value())
 		}
 	}
+	b.ReportMetric(float64(len(out)), "vals/it")
 }

@@ -93,7 +93,7 @@ var testBitArrayTypes []bitArrayType = []bitArrayType{
 		create: func() bitarray {
 			return newBinaryLRUIndex(newPagedSliceArray(100000), 128)
 		},
-		name: "LRU128Paged1M",
+		name: "LRU128Paged100k",
 	},
 }
 

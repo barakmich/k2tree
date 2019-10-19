@@ -1,6 +1,8 @@
 package k2tree
 
-import "math/rand"
+import (
+	"math/rand"
+)
 
 func populateRandomTree(nLinks, maxID int, k2 *K2Tree) (maxrow int, maxcol int) {
 	//fmt.Println("Populating Tree...")
@@ -14,6 +16,8 @@ func populateRandomTree(nLinks, maxID int, k2 *K2Tree) (maxrow int, maxcol int) 
 		row := rand.Intn(maxID)
 		col := rand.Intn(maxID)
 		k2.Add(row, col)
+		rowcnt[row]++
+		colcnt[col]++
 	}
 
 	maxrowcnt := 0

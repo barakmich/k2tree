@@ -62,3 +62,33 @@ func TestSixteenBPL(t *testing.T) {
 	}
 	fmt.Println(kk.Stats())
 }
+
+func TestRandAddTestCase(t *testing.T) {
+	// This test checks a regression on paged arrays.
+	k2, err := newK2Tree(
+		func() bitarray {
+			return newPagedSliceArray(10)
+		},
+		Config{
+			TreeLayerDef: SixteenBitsPerLayer,
+			CellLayerDef: FourBitsPerLayer,
+		},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	k2.Add(48081, 27887)
+	k2.Add(31847, 34059)
+	k2.Add(2081, 41318)
+	k2.Add(4425, 22540)
+	k2.Add(40456, 3300)
+	tmp := k2.Row(2081).ExtractAll()
+	if len(tmp) != 1 && tmp[0] != 41318 {
+		t.Errorf("Unmatched 2081")
+	}
+	tmp = k2.Row(40456).ExtractAll()
+	if len(tmp) != 1 && tmp[0] != 3300 {
+		t.Errorf("Unmatched 40456")
+	}
+
+}
