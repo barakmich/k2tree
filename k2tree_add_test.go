@@ -16,14 +16,10 @@ func TestSimpleAdd(t *testing.T) {
 		t.Fatal(err)
 	}
 	for x := 0; x < 8; x++ {
-		//fmt.Println("adding", x, x)
 		kk.Add(x, x)
-		//fmt.Println(kk.debug())
 	}
 	for x := 7; x >= 0; x-- {
-		//fmt.Println("adding", x, x)
 		k.Add(x, x)
-		//fmt.Println(k.debug())
 	}
 	if k.tbits.Len() != kk.tbits.Len() {
 		t.Error("lengths don't match in T")
@@ -43,6 +39,7 @@ func TestSimpleAdd(t *testing.T) {
 	}
 }
 
+// TestSixteenBPL inserts a diagonal of edges, starting at a large offset.
 func TestSixteenBPL(t *testing.T) {
 	kk, err := NewWithConfig(
 		Config{
@@ -55,8 +52,7 @@ func TestSixteenBPL(t *testing.T) {
 	}
 	base := 5000000
 	td := time.Now()
-	for x := 0; x < 1400000; x++ {
-		//fmt.Println("adding", x, x)
+	for x := 0; x < 1000000; x++ {
 		kk.Add(base+x, base+x)
 		if x%100000 == 0 {
 			newt := time.Now()
@@ -64,8 +60,5 @@ func TestSixteenBPL(t *testing.T) {
 			td = newt
 		}
 	}
-	//	fmt.Println(kk.debug())
-
 	fmt.Println(kk.Stats())
-
 }
