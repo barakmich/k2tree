@@ -33,6 +33,13 @@ var SixtyFourBitsPerLayer = LayerDef{
 	shiftPerLayer: 3,
 }
 
+var TwoFiftySixBitsPerLayer = LayerDef{
+	bitsPerLayer:  256,
+	kPerLayer:     16,
+	maskPerLayer:  0xf,
+	shiftPerLayer: 4,
+}
+
 var DefaultConfig Config = SixteenFourConfig
 
 var FourFourConfig Config = Config{

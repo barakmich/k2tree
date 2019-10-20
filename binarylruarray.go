@@ -7,24 +7,31 @@ import (
 )
 
 type binaryLRUIndex struct {
-	bits         bitarray
-	offsets      []int
-	counts       []int
-	cacheHistory *list.List
-	size         int
+	bits          bitarray
+	offsets       []int
+	counts        []int
+	cacheHistory  *list.List
+	size          int
+	cacheDistance int
 }
 
 var _ bitarray = (*binaryLRUIndex)(nil)
 
 const (
-	PopcntCacheBits = 1024
+	// DefaultLRUCacheDistance was optimized experimentally. It's the distance
+	// in bits between cache hits. It's a tradeoff between leaning on the POPCNT
+	// instruction between known offsets in the cache and the overhead of
+	// maintaining the LRU. If the LRU gets cheaper to maintain, this may get
+	// decreased. If POPCNT gets faster, this may increase.
+	DefaultLRUCacheDistance = 1024
 )
 
 func newBinaryLRUIndex(bits bitarray, size int) *binaryLRUIndex {
 	return &binaryLRUIndex{
-		bits:         bits,
-		size:         size,
-		cacheHistory: list.New(),
+		bits:          bits,
+		size:          size,
+		cacheHistory:  list.New(),
+		cacheDistance: DefaultLRUCacheDistance,
 	}
 }
 
@@ -88,7 +95,7 @@ func (b *binaryLRUIndex) zeroCount(to int) int {
 	}
 
 	// Update the cache
-	if abs(to-at) > PopcntCacheBits {
+	if abs(to-at) > b.cacheDistance {
 		// If we're far away, add it to the cache
 		b.cacheAdd(val, to)
 	}

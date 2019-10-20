@@ -102,24 +102,7 @@ func BenchmarkIncPop1M(b *testing.B) {
 }
 
 func BenchmarkIncPopVar(b *testing.B) {
-	tt := []struct {
-		config Config
-		name   string
-	}{
-		{
-			config: SixteenFourConfig,
-			name:   "16x4",
-		},
-		{
-			config: SixteenSixteenConfig,
-			name:   "16x16",
-		},
-		{
-			config: SixtySixteenConfig,
-			name:   "64x16",
-		},
-	}
-	for _, k2config := range tt {
+	for _, k2config := range testK2Configs {
 		for _, bitarrayt := range fastBitArrayTypes {
 			b.Run(fmt.Sprint(k2config.name, bitarrayt.name), func(b *testing.B) {
 				k2, err := newK2Tree(bitarrayt.create, k2config.config)
@@ -166,5 +149,38 @@ var fastBitArrayTypes []bitArrayType = []bitArrayType{
 			return newBinaryLRUIndex(newPagedSliceArray(1024*1024*8), 128)
 		},
 		name: "LRU128Paged1MB",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(newPagedSliceArray(1024*1024*8), 512)
+		},
+		name: "LRU512Paged1MB",
+	},
+}
+
+type k2configTest struct {
+	config Config
+	name   string
+}
+
+var testK2Configs []k2configTest = []k2configTest{
+	{
+		config: SixteenFourConfig,
+		name:   "16x4",
+	},
+	{
+		config: SixteenSixteenConfig,
+		name:   "16x16",
+	},
+	{
+		config: SixtySixteenConfig,
+		name:   "64x16",
+	},
+	{
+		config: Config{
+			TreeLayerDef: TwoFiftySixBitsPerLayer,
+			CellLayerDef: SixteenBitsPerLayer,
+		},
+		name: "256x16",
 	},
 }
