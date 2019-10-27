@@ -1,4 +1,8 @@
+github.com/barakmich/mmap-go v0.0.0-20191027014435-dd5d4dc6d995 h1:x5Nh6A40IMXLyCvKsEwkNUaHfACgGrqgTlfm1V1cep8=
+github.com/barakmich/mmap-go v0.0.0-20191027014435-dd5d4dc6d995/go.mod h1:N4tmgCtGdjLsh1ciT0jzAfp8UIIUcSJHOiksPGZdtZs=
 github.com/dustin/go-humanize v1.0.0 h1:VSnTsYCnlFHaM2/igO1h6X3HA71jcobQuxemgkq4zYo=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/tmthrgd/go-popcount v0.0.0-20190904054823-afb1ace8b04f h1:Phf2p9+twoHct5ZjSTrI8K7iWeSxO4x1p5pShTl0J00=
 github.com/tmthrgd/go-popcount v0.0.0-20190904054823-afb1ace8b04f/go.mod h1:FcUQfrsAsSSqM3n9xf4EtPzB8tWzt58/y0AV+wNNM8Q=
+golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 h1:YyJpGZS1sBuBCzLAR1VEpK193GlqGZbnPFnPV/5Rsb4=
+golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
