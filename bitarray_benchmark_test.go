@@ -119,6 +119,69 @@ func BenchmarkIncPopVar(b *testing.B) {
 	}
 }
 
+func BenchmarkRandPopVar(b *testing.B) {
+	for _, k2config := range testK2Configs {
+		for _, bitarrayt := range fastBitArrayTypes {
+			b.Run(fmt.Sprint(k2config.name, bitarrayt.name), func(b *testing.B) {
+				k2, err := newK2Tree(bitarrayt.create, k2config.config)
+				if err != nil {
+					b.Fatal(err)
+				}
+				b.ResetTimer()
+				populateRandomTree(b.N, b.N*2, k2)
+				stats := k2.Stats()
+				b.ReportMetric(stats.BitsPerLink, "bits/link")
+			})
+		}
+
+	}
+}
+
+func BenchmarkRandUnindexed(b *testing.B) {
+	for _, bitarrayt := range unindexedBitArrayTypes {
+		b.Run(bitarrayt.name, func(b *testing.B) {
+			k2, err := newK2Tree(bitarrayt.create, SixteenSixteenConfig)
+			if err != nil {
+				b.Fatal(err)
+			}
+			b.ResetTimer()
+			populateRandomTree(b.N, b.N*2, k2)
+			stats := k2.Stats()
+			b.ReportMetric(stats.BitsPerLink, "bits/link")
+		})
+	}
+}
+
+func BenchmarkIncUnindexed(b *testing.B) {
+	for _, bitarrayt := range unindexedBitArrayTypes {
+		b.Run(bitarrayt.name, func(b *testing.B) {
+			k2, err := newK2Tree(bitarrayt.create, SixteenSixteenConfig)
+			if err != nil {
+				b.Fatal(err)
+			}
+			b.ResetTimer()
+			populateIncrementalTree(b.N, k2)
+			stats := k2.Stats()
+			b.ReportMetric(stats.BitsPerLink, "bits/link")
+		})
+	}
+}
+
+var unindexedBitArrayTypes []bitArrayType = []bitArrayType{
+	{
+		create: func() bitarray {
+			return &sliceArray{}
+		},
+		name: "SliceArray",
+	},
+	{
+		create: func() bitarray {
+			return newPagedSliceArray(128 * 1024)
+		},
+		name: "Paged128kb",
+	},
+}
+
 var fastBitArrayTypes []bitArrayType = []bitArrayType{
 	{
 		create: func() bitarray {
