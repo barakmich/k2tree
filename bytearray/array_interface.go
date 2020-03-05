@@ -1,4 +1,4 @@
-package spillover
+package bytearray
 
 type testArray interface {
 	Len() int

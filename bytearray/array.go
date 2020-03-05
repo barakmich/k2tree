@@ -1,11 +1,11 @@
-package spillover
+package bytearray
 
 import (
 	"fmt"
 	"math"
 )
 
-type Array struct {
+type SpilloverArray struct {
 	bytes      []byte
 	levelOff   []int
 	levelCount []int
@@ -17,21 +17,21 @@ type Array struct {
 	multiplier bool
 }
 
-func (a *Array) stats() string {
-	var b Array
+func (a *SpilloverArray) stats() string {
+	var b SpilloverArray
 	b = *a
 	b.bytes = nil
 	return fmt.Sprintf("%#v", b)
 }
 
-func New(pagesize int, highwaterPercentage, lowUtilization float64, multiplier bool) *Array {
+func NewSpilloverArray(pagesize int, highwaterPercentage, lowUtilization float64, multiplier bool) *SpilloverArray {
 	if highwaterPercentage < lowUtilization {
 		panic("User error: highwaterPercentage is higher than lowUtilization")
 	}
 	hw := int(math.Round(highwaterPercentage * float64(pagesize)))
 	low := int(math.Round(lowUtilization * float64(pagesize)))
 
-	return &Array{
+	return &SpilloverArray{
 		bytes:      make([]byte, pagesize),
 		levelOff:   []int{pagesize},
 		levelCount: []int{0},
@@ -44,7 +44,7 @@ func New(pagesize int, highwaterPercentage, lowUtilization float64, multiplier b
 	}
 }
 
-func (a *Array) Set(idx int, b byte) {
+func (a *SpilloverArray) Set(idx int, b byte) {
 	if idx >= a.length {
 		panic("Writing off the edge of the Spillover Array")
 	}
@@ -52,7 +52,7 @@ func (a *Array) Set(idx int, b byte) {
 	a.bytes[off] = b
 }
 
-func (a *Array) Get(idx int) byte {
+func (a *SpilloverArray) Get(idx int) byte {
 	if idx >= a.length {
 		panic("Fetching off the edge of the Spillover Array")
 	}
@@ -60,7 +60,7 @@ func (a *Array) Get(idx int) byte {
 	return a.bytes[off]
 }
 
-func (a *Array) Insert(idx int, b []byte) {
+func (a *SpilloverArray) Insert(idx int, b []byte) {
 	for len(b) != 0 {
 		l, absoff := a.findOffset(idx)
 		var toInsert []byte
@@ -79,14 +79,14 @@ func (a *Array) Insert(idx int, b []byte) {
 	}
 }
 
-func (a *Array) levelPower(n int, l int) int {
+func (a *SpilloverArray) levelPower(n int, l int) int {
 	if a.multiplier {
 		return n << l
 	}
 	return n
 }
 
-func (a *Array) insertIntoLevel(level int, absindex int, b []byte) {
+func (a *SpilloverArray) insertIntoLevel(level int, absindex int, b []byte) {
 	off := a.levelOff[level]
 	copy(a.bytes[off-len(b):], a.bytes[off:absindex])
 	a.levelOff[level] -= len(b)
@@ -95,7 +95,7 @@ func (a *Array) insertIntoLevel(level int, absindex int, b []byte) {
 	copy(a.bytes[absindex-len(b):], b)
 }
 
-func (a *Array) rebalance() {
+func (a *SpilloverArray) rebalance() {
 	for l := 0; l < a.levels(); l++ {
 		if a.needsBalance(l) {
 			// Time to spill downward
@@ -117,7 +117,7 @@ func (a *Array) rebalance() {
 	}
 }
 
-func (a *Array) createNewLevel() {
+func (a *SpilloverArray) createNewLevel() {
 	oldlen := len(a.bytes)
 	newLevel := a.levels()
 	a.bytes = append(a.bytes, make([]byte, a.levelTotalCapacity(newLevel))...)
@@ -140,18 +140,18 @@ func min(x, y int) int {
 	return x
 }
 
-func (a *Array) needsBalance(l int) bool {
+func (a *SpilloverArray) needsBalance(l int) bool {
 	return a.levelCount[l] > a.levelPower(a.highwater, l)
 }
 
-func (a *Array) Len() int {
+func (a *SpilloverArray) Len() int {
 	return a.length
 }
 
 // findOffset finds the real offset in Array.bytes
 // that corresponds with the abstracted offset
 // as well as the level at which that offset occurs
-func (a *Array) findOffset(idx int) (level, offset int) {
+func (a *SpilloverArray) findOffset(idx int) (level, offset int) {
 	var i, x int
 	for i, x = range a.levelCount {
 		if idx == 0 {
@@ -168,23 +168,23 @@ func (a *Array) findOffset(idx int) (level, offset int) {
 	panic(fmt.Sprintf("offset too large %d", idx))
 }
 
-func (a *Array) levelTotalCapacity(l int) int {
+func (a *SpilloverArray) levelTotalCapacity(l int) int {
 	return a.levelPower(a.pagesize, l)
 }
 
-func (a *Array) levelUsage(l int) int {
+func (a *SpilloverArray) levelUsage(l int) int {
 	return a.levelCount[l]
 }
 
-func (a *Array) levelFree(l int) int {
+func (a *SpilloverArray) levelFree(l int) int {
 	return a.levelTotalCapacity(l) - a.levelCount[l]
 }
 
-func (a *Array) levels() int {
+func (a *SpilloverArray) levels() int {
 	return len(a.levelCount)
 }
 
-func (a *Array) checkInvariants() {
+func (a *SpilloverArray) checkInvariants() {
 	s := 0
 	for _, x := range a.levelCount {
 		s += x

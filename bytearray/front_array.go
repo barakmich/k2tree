@@ -1,4 +1,4 @@
-package spillover
+package bytearray
 
 var _ testArray = &frontSliceTest{}
 
