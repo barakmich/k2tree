@@ -2,8 +2,8 @@ package bytearray
 
 import "testing"
 
-func TestRebalance(t *testing.T) {
-	a := &Array{
+func TestRebalanceSpillover(t *testing.T) {
+	a := &SpilloverArray{
 		bytes:      []byte{0x01, 0x02},
 		levelOff:   []int{0},
 		levelStart: []int{0},
@@ -19,7 +19,7 @@ func TestRebalance(t *testing.T) {
 
 	t.Logf("%#v\n %#v\n", a.bytes, a)
 
-	a = New(2, 0.5, 0.5, true)
+	a = NewSpillover(2, 0.5, 0.5, true)
 	a.Insert(0, []byte{0x02})
 	t.Logf("%#v\n %#v\n", a.bytes, a)
 	a.Insert(0, []byte{0x01})
@@ -27,10 +27,10 @@ func TestRebalance(t *testing.T) {
 	t.Logf("%#v\n %#v\n", a.bytes, a)
 }
 
-func TestCompareBaselineSpillover(t *testing.T) {
+func TestCompareSliceSpillover(t *testing.T) {
 	tv := insertTestVector()
-	vec_a := newSliceTest()
-	vec_b := New(512, 0.75, 0.5, true)
+	vec_a := NewSlice()
+	vec_b := NewSpillover(512, 0.75, 0.5, true)
 	for i, x := range tv {
 		b := byte(i)
 		vec_a.Insert(x, []byte{b, b})

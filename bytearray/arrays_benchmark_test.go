@@ -41,7 +41,7 @@ func BenchmarkSpilloverMatrix(b *testing.B) {
 						tv := insertTestVector()
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
-							vec := New(p, h, l, m)
+							vec := NewSpillover(p, h, l, m)
 							for i := 0; i < 10; i++ {
 								for _, x := range tv {
 									vec.Insert(x, []byte{0x01, 0x01})
@@ -57,38 +57,38 @@ func BenchmarkSpilloverMatrix(b *testing.B) {
 }
 
 type testarraytype struct {
-	makeArray func() testArray
+	makeArray func() ByteArray
 	name      string
 }
 
 var arrayTypes []testarraytype = []testarraytype{
 	{
-		makeArray: func() testArray {
-			return &sliceTest{}
+		makeArray: func() ByteArray {
+			return &SliceArray{}
 		},
 		name: "Slice:::::::::",
 	},
 	{
-		makeArray: func() testArray {
-			return newFrontSliceTest(1024)
+		makeArray: func() ByteArray {
+			return NewFrontSlice(1024)
 		},
 		name: "FrontSlice1k:::",
 	},
 	{
-		makeArray: func() testArray {
-			return newFrontSliceTest(1024 * 1024)
+		makeArray: func() ByteArray {
+			return NewFrontSlice(1024 * 1024)
 		},
 		name: "FrontSlice1M:::",
 	},
 	{
-		makeArray: func() testArray {
-			return New(1024, 0.8, 0.5, true)
+		makeArray: func() ByteArray {
+			return NewSpillover(1024, 0.8, 0.5, true)
 		},
 		name: "Spillover::1024:80:50:2x",
 	},
 	{
-		makeArray: func() testArray {
-			return New(4096, 0.8, 0.3, false)
+		makeArray: func() ByteArray {
+			return NewSpillover(4096, 0.8, 0.3, false)
 		},
 		name: "Spillover::1024:80:30:1x",
 	},
@@ -96,8 +96,8 @@ var arrayTypes []testarraytype = []testarraytype{
 
 func TestCompareBaselineFront(t *testing.T) {
 	tv := insertTestVector()
-	vec_a := newSliceTest()
-	vec_b := newFrontSliceTest(1024)
+	vec_a := NewSlice()
+	vec_b := NewFrontSlice(1024)
 	for i, x := range tv {
 		b := byte(i)
 		vec_a.Insert(x, []byte{b, b})

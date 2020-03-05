@@ -1,36 +1,36 @@
 package bytearray
 
-type testArray interface {
+type ByteArray interface {
 	Len() int
 	Set(idx int, b byte)
 	Get(idx int) byte
 	Insert(idx int, b []byte)
 }
 
-var _ testArray = &Array{}
-var _ testArray = &sliceTest{}
+var _ ByteArray = &SpilloverArray{}
+var _ ByteArray = &SliceArray{}
 
-type sliceTest struct {
+type SliceArray struct {
 	bytes []byte
 }
 
-func newSliceTest() *sliceTest {
-	return &sliceTest{}
+func NewSlice() *SliceArray {
+	return &SliceArray{}
 }
 
-func (s *sliceTest) Len() int {
+func (s *SliceArray) Len() int {
 	return len(s.bytes)
 }
 
-func (s *sliceTest) Set(idx int, b byte) {
+func (s *SliceArray) Set(idx int, b byte) {
 	s.bytes[idx] = b
 }
 
-func (s *sliceTest) Get(idx int) byte {
+func (s *SliceArray) Get(idx int) byte {
 	return s.bytes[idx]
 }
 
-func (s *sliceTest) Insert(idx int, b []byte) {
+func (s *SliceArray) Insert(idx int, b []byte) {
 	newbytes := len(b)
 	s.bytes = append(s.bytes, make([]byte, newbytes)...)
 	copy(s.bytes[idx+newbytes:], s.bytes[idx:])

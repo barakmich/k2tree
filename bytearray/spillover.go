@@ -24,7 +24,7 @@ func (a *SpilloverArray) stats() string {
 	return fmt.Sprintf("%#v", b)
 }
 
-func NewSpilloverArray(pagesize int, highwaterPercentage, lowUtilization float64, multiplier bool) *SpilloverArray {
+func NewSpillover(pagesize int, highwaterPercentage, lowUtilization float64, multiplier bool) *SpilloverArray {
 	if highwaterPercentage < lowUtilization {
 		panic("User error: highwaterPercentage is higher than lowUtilization")
 	}
