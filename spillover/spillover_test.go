@@ -1,0 +1,49 @@
+package spillover
+
+import "testing"
+
+func TestRebalance(t *testing.T) {
+	a := &Array{
+		bytes:      []byte{0x01, 0x02},
+		levelOff:   []int{0},
+		levelCount: []int{2},
+		length:     2,
+		pagesize:   2,
+		highwater:  1,
+		low:        1,
+	}
+	a.rebalance()
+	a.checkInvariants()
+
+	t.Logf("%#v\n %#v\n", a.bytes, a)
+
+	a = New(2, 0.5, 0.5)
+	a.Insert(0, []byte{0x02})
+	t.Logf("%#v\n %#v\n", a.bytes, a)
+	a.Insert(0, []byte{0x01})
+	a.checkInvariants()
+	t.Logf("%#v\n %#v\n", a.bytes, a)
+}
+
+func TestCompareBaselineSpillover(t *testing.T) {
+	tv := insertTestVector()
+	vec_a := newSliceTest()
+	vec_b := New(512, 0.75, 0.5)
+	for i, x := range tv {
+		b := byte(i)
+		vec_a.Insert(x, []byte{b, b})
+		vec_b.Insert(x, []byte{b, b})
+		if vec_a.Len() != vec_b.Len() {
+			t.Fatalf("Different Lengths after %d: %d %d", i, vec_a.Len(), vec_b.Len())
+		}
+	}
+	vec_b.checkInvariants()
+
+	for i := 0; i < vec_a.Len(); i++ {
+
+		if vec_a.Get(i) != vec_b.Get(i) {
+			t.Logf("Spillover Stats: %s", vec_b.stats())
+			t.Fatalf("Mismatched byte at %d: ex %v, got %v", i, vec_a.Get(i), vec_b.Get(i))
+		}
+	}
+}
