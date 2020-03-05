@@ -32,7 +32,7 @@ func testCompareBaseline(t *testing.T, vec_b ByteArray) {
 	if vec_a.PopCount(0, vec_a.Len()) != vec_b.PopCount(0, vec_b.Len()) {
 		t.Fatalf("Mismatched PopCount for Whole String")
 	}
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 500; i++ {
 		x := rand.Intn(vec_a.Len())
 		y := rand.Intn(vec_a.Len())
 		if x > y {

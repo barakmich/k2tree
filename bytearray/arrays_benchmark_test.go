@@ -8,6 +8,7 @@ import (
 func BenchmarkInsertPatternArray(b *testing.B) {
 	for _, arraytype := range arrayTypes {
 		b.Run(fmt.Sprintf(arraytype.name), func(b *testing.B) {
+			b.ReportAllocs()
 			tv := insertTestVector()
 			b.ResetTimer()
 			for n := 0; n < b.N; n++ {
@@ -33,6 +34,7 @@ func BenchmarkSpilloverMatrix(b *testing.B) {
 			for _, h := range highwaters {
 				for _, l := range lowwaters {
 					b.Run(fmt.Sprintf("%d:%.2f:%.2f:%v", p, h, l, m), func(b *testing.B) {
+						b.ReportAllocs()
 						tv := insertTestVector()
 						b.ResetTimer()
 						for n := 0; n < b.N; n++ {
