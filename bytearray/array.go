@@ -9,10 +9,12 @@ type Array struct {
 	bytes      []byte
 	levelOff   []int
 	levelCount []int
+	levelStart []int
 	length     int
 	pagesize   int
 	highwater  int
 	low        int
+	multiplier bool
 }
 
 func (a *Array) stats() string {
@@ -22,7 +24,7 @@ func (a *Array) stats() string {
 	return fmt.Sprintf("%#v", b)
 }
 
-func New(pagesize int, highwaterPercentage, lowUtilization float64) *Array {
+func New(pagesize int, highwaterPercentage, lowUtilization float64, multiplier bool) *Array {
 	if highwaterPercentage < lowUtilization {
 		panic("User error: highwaterPercentage is higher than lowUtilization")
 	}
@@ -33,10 +35,12 @@ func New(pagesize int, highwaterPercentage, lowUtilization float64) *Array {
 		bytes:      make([]byte, pagesize),
 		levelOff:   []int{pagesize},
 		levelCount: []int{0},
+		levelStart: []int{0},
 		length:     0,
 		pagesize:   pagesize,
 		highwater:  hw,
 		low:        low,
+		multiplier: multiplier,
 	}
 }
 
@@ -75,6 +79,13 @@ func (a *Array) Insert(idx int, b []byte) {
 	}
 }
 
+func (a *Array) levelPower(n int, l int) int {
+	if a.multiplier {
+		return n << l
+	}
+	return n
+}
+
 func (a *Array) insertIntoLevel(level int, absindex int, b []byte) {
 	off := a.levelOff[level]
 	copy(a.bytes[off-len(b):], a.bytes[off:absindex])
@@ -91,15 +102,15 @@ func (a *Array) rebalance() {
 			if l == a.levels()-1 {
 				a.createNewLevel()
 			}
-			overlow := a.levelCount[l] - (a.low << l)
+			overlow := a.levelCount[l] - a.levelPower(a.low, l)
 			if overlow < 0 {
 				panic(fmt.Sprintf("l: %d, count %#v, off %#v", l, a.levelCount, a.levelOff))
 			}
 			toMove := min(overlow, a.levelFree(l+1))
 			a.levelOff[l+1] -= toMove
-			copy(a.bytes[a.levelOff[l+1]:], a.bytes[a.levelStart(l+1)-toMove:a.levelStart(l+1)])
+			copy(a.bytes[a.levelOff[l+1]:], a.bytes[a.levelStart[l+1]-toMove:a.levelStart[l+1]])
 			a.levelCount[l+1] += toMove
-			copy(a.bytes[a.levelOff[l]+toMove:a.levelStart(l+1)], a.bytes[a.levelOff[l]:])
+			copy(a.bytes[a.levelOff[l]+toMove:a.levelStart[l+1]], a.bytes[a.levelOff[l]:])
 			a.levelOff[l] += toMove
 			a.levelCount[l] -= toMove
 		}
@@ -107,8 +118,10 @@ func (a *Array) rebalance() {
 }
 
 func (a *Array) createNewLevel() {
+	oldlen := len(a.bytes)
 	newLevel := a.levels()
 	a.bytes = append(a.bytes, make([]byte, a.levelTotalCapacity(newLevel))...)
+	a.levelStart = append(a.levelStart, oldlen)
 	a.levelCount = append(a.levelCount, 0)
 	a.levelOff = append(a.levelOff, len(a.bytes))
 }
@@ -128,7 +141,7 @@ func min(x, y int) int {
 }
 
 func (a *Array) needsBalance(l int) bool {
-	return a.levelCount[l] > (a.highwater << l)
+	return a.levelCount[l] > a.levelPower(a.highwater, l)
 }
 
 func (a *Array) Len() int {
@@ -156,10 +169,7 @@ func (a *Array) findOffset(idx int) (level, offset int) {
 }
 
 func (a *Array) levelTotalCapacity(l int) int {
-	return a.pagesize << l
-}
-func (a *Array) levelStart(l int) int {
-	return (a.pagesize << l) - a.pagesize
+	return a.levelPower(a.pagesize, l)
 }
 
 func (a *Array) levelUsage(l int) int {
@@ -167,7 +177,7 @@ func (a *Array) levelUsage(l int) int {
 }
 
 func (a *Array) levelFree(l int) int {
-	return a.levelOff[l] - a.levelStart(l)
+	return a.levelTotalCapacity(l) - a.levelCount[l]
 }
 
 func (a *Array) levels() int {

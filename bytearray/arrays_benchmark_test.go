@@ -28,6 +28,34 @@ func BenchmarkInsertPatternArray(b *testing.B) {
 	}
 }
 
+func BenchmarkSpilloverMatrix(b *testing.B) {
+	highwaters := []float64{0.75, 0.8, 0.9}
+	lowwaters := []float64{0.3, 0.5, 0.7}
+	multipliers := []bool{false, true}
+	pagesizes := []int{1024, 4 * 1024}
+	for _, p := range pagesizes {
+		for _, m := range multipliers {
+			for _, h := range highwaters {
+				for _, l := range lowwaters {
+					b.Run(fmt.Sprintf("%d:%.2f:%.2f:%v", p, h, l, m), func(b *testing.B) {
+						tv := insertTestVector()
+						b.ResetTimer()
+						for n := 0; n < b.N; n++ {
+							vec := New(p, h, l, m)
+							for i := 0; i < 10; i++ {
+								for _, x := range tv {
+									vec.Insert(x, []byte{0x01, 0x01})
+								}
+							}
+						}
+
+					})
+				}
+			}
+		}
+	}
+}
+
 type testarraytype struct {
 	makeArray func() testArray
 	name      string
@@ -54,45 +82,15 @@ var arrayTypes []testarraytype = []testarraytype{
 	},
 	{
 		makeArray: func() testArray {
-			return New(512, 0.8, 0.5)
+			return New(1024, 0.8, 0.5, true)
 		},
-		name: "Spillover:512:80:50",
+		name: "Spillover::1024:80:50:2x",
 	},
 	{
 		makeArray: func() testArray {
-			return New(512, 0.8, 0.3)
+			return New(4096, 0.8, 0.3, false)
 		},
-		name: "Spillover:512:80:30",
-	},
-	{
-		makeArray: func() testArray {
-			return New(512, 0.9, 0.7)
-		},
-		name: "Spillover:512:90:70",
-	},
-	{
-		makeArray: func() testArray {
-			return New(512, 0.9, 0.5)
-		},
-		name: "Spillover:512:90:50",
-	},
-	{
-		makeArray: func() testArray {
-			return New(512, 0.9, 0.3)
-		},
-		name: "Spillover:512:90:30",
-	},
-	{
-		makeArray: func() testArray {
-			return New(1024, 0.8, 0.5)
-		},
-		name: "Spillover:1024:80:50",
-	},
-	{
-		makeArray: func() testArray {
-			return New(2048, 0.8, 0.5)
-		},
-		name: "Spillover:2048:80:50",
+		name: "Spillover::1024:80:30:1x",
 	},
 }
 
