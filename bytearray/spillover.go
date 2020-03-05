@@ -3,6 +3,8 @@ package bytearray
 import (
 	"fmt"
 	"math"
+
+	"github.com/tmthrgd/go-popcount"
 )
 
 type SpilloverArray struct {
@@ -200,4 +202,21 @@ func (a *SpilloverArray) checkInvariants() {
 		panic("levelUsage invariant broken")
 	}
 
+}
+
+func (a *SpilloverArray) PopCount(start, end int) uint64 {
+	var count uint64
+	startl, startoff := a.findOffset(start)
+	endl, endoff := a.findOffset(end)
+
+	if startl == endl {
+		return popcount.CountBytes(a.bytes[startoff:endoff])
+	}
+
+	count += popcount.CountBytes(a.bytes[startoff:a.levelStart[startl+1]])
+	count += popcount.CountBytes(a.bytes[a.levelOff[endl]:endoff])
+	for l := startl + 1; l < endl; l++ {
+		count += popcount.CountBytes(a.bytes[a.levelOff[l]:a.levelStart[l+1]])
+	}
+	return count
 }

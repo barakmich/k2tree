@@ -28,24 +28,6 @@ func TestRebalanceSpillover(t *testing.T) {
 }
 
 func TestCompareSliceSpillover(t *testing.T) {
-	tv := insertTestVector()
-	vec_a := NewSlice()
-	vec_b := NewSpillover(512, 0.75, 0.5, true)
-	for i, x := range tv {
-		b := byte(i)
-		vec_a.Insert(x, []byte{b, b})
-		vec_b.Insert(x, []byte{b, b})
-		if vec_a.Len() != vec_b.Len() {
-			t.Fatalf("Different Lengths after %d: %d %d", i, vec_a.Len(), vec_b.Len())
-		}
-	}
-	vec_b.checkInvariants()
-
-	for i := 0; i < vec_a.Len(); i++ {
-
-		if vec_a.Get(i) != vec_b.Get(i) {
-			t.Logf("Spillover Stats: %s", vec_b.stats())
-			t.Fatalf("Mismatched byte at %d: ex %v, got %v", i, vec_a.Get(i), vec_b.Get(i))
-		}
-	}
+	vec := NewSpillover(512, 0.75, 0.5, true)
+	testCompareBaseline(t, vec)
 }

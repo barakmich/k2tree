@@ -1,12 +1,7 @@
 package bytearray
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
-	"strconv"
-	"strings"
 	"testing"
 )
 
@@ -92,55 +87,4 @@ var arrayTypes []testarraytype = []testarraytype{
 		},
 		name: "Spillover::1024:80:30:1x",
 	},
-}
-
-func TestCompareBaselineFront(t *testing.T) {
-	tv := insertTestVector()
-	vec_a := NewSlice()
-	vec_b := NewFrontSlice(1024)
-	for i, x := range tv {
-		b := byte(i)
-		vec_a.Insert(x, []byte{b, b})
-		vec_b.Insert(x, []byte{b, b})
-		if vec_a.Len() != vec_b.Len() {
-			t.Fatalf("Different Lengths after %d: %d %d", i, vec_a.Len(), vec_b.Len())
-		}
-	}
-
-	for i := 0; i < vec_a.Len(); i++ {
-
-		if vec_a.Get(i) != vec_b.Get(i) {
-			t.Fatalf("Mismatched byte at %d: ex %v, got %v", i, vec_a.Get(i), vec_b.Get(i))
-		}
-	}
-}
-
-var insertTestVectorCache []int = nil
-
-func insertTestVector() []int {
-	if insertTestVectorCache != nil {
-		return insertTestVectorCache
-	}
-
-	f, err := os.Open("insert_test.txt")
-	if err != nil {
-		panic(err)
-	}
-	r := bufio.NewReader(f)
-	for {
-		s, err := r.ReadString('\n')
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			panic(err)
-		}
-		i, err := strconv.Atoi(strings.TrimSpace(s))
-		if err != nil {
-			panic(err)
-		}
-		insertTestVectorCache = append(insertTestVectorCache, i/8)
-	}
-
-	return insertTestVectorCache
 }

@@ -1,10 +1,13 @@
 package bytearray
 
+import "github.com/tmthrgd/go-popcount"
+
 type ByteArray interface {
 	Len() int
 	Set(idx int, b byte)
 	Get(idx int) byte
 	Insert(idx int, b []byte)
+	PopCount(start, end int) uint64
 }
 
 var _ ByteArray = &SpilloverArray{}
@@ -37,4 +40,8 @@ func (s *SliceArray) Insert(idx int, b []byte) {
 	for x := 0; x < newbytes; x++ {
 		s.bytes[idx+x] = b[x]
 	}
+}
+
+func (s *SliceArray) PopCount(start, end int) uint64 {
+	return popcount.CountBytes(s.bytes[start:end])
 }

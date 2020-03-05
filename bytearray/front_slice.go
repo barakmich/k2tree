@@ -1,5 +1,7 @@
 package bytearray
 
+import "github.com/tmthrgd/go-popcount"
+
 var _ ByteArray = &FrontSlice{}
 
 type FrontSlice struct {
@@ -39,4 +41,8 @@ func (f *FrontSlice) Insert(idx int, b []byte) {
 	copy(f.bytes[f.off-len(b):], f.bytes[f.off:f.off+idx])
 	f.off -= len(b)
 	copy(f.bytes[f.off+idx:], b)
+}
+
+func (f *FrontSlice) PopCount(start, end int) uint64 {
+	return popcount.CountBytes(f.bytes[f.off+start : f.off+end])
 }
