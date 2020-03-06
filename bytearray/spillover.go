@@ -10,8 +10,6 @@ import (
 type SpilloverArray struct {
 	bytes      []byte
 	levelOff   []int
-	levelCount []int
-	levelStart []int
 	length     int
 	pagesize   int
 	highwater  int
@@ -36,8 +34,6 @@ func NewSpillover(pagesize int, highwaterPercentage, lowUtilization float64, mul
 	return &SpilloverArray{
 		bytes:      make([]byte, pagesize),
 		levelOff:   []int{pagesize},
-		levelCount: []int{0},
-		levelStart: []int{0},
 		length:     0,
 		pagesize:   pagesize,
 		highwater:  hw,
@@ -88,11 +84,21 @@ func (a *SpilloverArray) levelPower(n int, l int) int {
 	return n
 }
 
+func (a *SpilloverArray) levelCount(l int) int {
+	return a.levelStart(l+1) - a.levelOff[l]
+}
+
+func (a *SpilloverArray) levelStart(l int) int {
+	if a.multiplier {
+		return (a.pagesize << l) - a.pagesize
+	}
+	return a.pagesize * l
+}
+
 func (a *SpilloverArray) insertIntoLevel(level int, absindex int, b []byte) {
 	off := a.levelOff[level]
 	copy(a.bytes[off-len(b):], a.bytes[off:absindex])
 	a.levelOff[level] -= len(b)
-	a.levelCount[level] += len(b)
 	a.length += len(b)
 	copy(a.bytes[absindex-len(b):], b)
 }
@@ -104,27 +110,22 @@ func (a *SpilloverArray) rebalance() {
 			if l == a.levels()-1 {
 				a.createNewLevel()
 			}
-			overlow := a.levelCount[l] - a.levelPower(a.low, l)
+			overlow := a.levelCount(l) - a.levelPower(a.low, l)
 			if overlow < 0 {
-				panic(fmt.Sprintf("l: %d, count %#v, off %#v", l, a.levelCount, a.levelOff))
+				panic(fmt.Sprintf("l: %d, off %#v", l, a.levelOff))
 			}
 			toMove := min(overlow, a.levelFree(l+1))
 			a.levelOff[l+1] -= toMove
-			copy(a.bytes[a.levelOff[l+1]:], a.bytes[a.levelStart[l+1]-toMove:a.levelStart[l+1]])
-			a.levelCount[l+1] += toMove
-			copy(a.bytes[a.levelOff[l]+toMove:a.levelStart[l+1]], a.bytes[a.levelOff[l]:])
+			copy(a.bytes[a.levelOff[l+1]:], a.bytes[a.levelStart(l+1)-toMove:a.levelStart(l+1)])
+			copy(a.bytes[a.levelOff[l]+toMove:a.levelStart(l+1)], a.bytes[a.levelOff[l]:])
 			a.levelOff[l] += toMove
-			a.levelCount[l] -= toMove
 		}
 	}
 }
 
 func (a *SpilloverArray) createNewLevel() {
-	oldlen := len(a.bytes)
 	newLevel := a.levels()
 	a.bytes = append(a.bytes, make([]byte, a.levelTotalCapacity(newLevel))...)
-	a.levelStart = append(a.levelStart, oldlen)
-	a.levelCount = append(a.levelCount, 0)
 	a.levelOff = append(a.levelOff, len(a.bytes))
 }
 
@@ -143,7 +144,7 @@ func min(x, y int) int {
 }
 
 func (a *SpilloverArray) needsBalance(l int) bool {
-	return a.levelCount[l] > a.levelPower(a.highwater, l)
+	return a.levelCount(l) > a.levelPower(a.highwater, l)
 }
 
 func (a *SpilloverArray) Len() int {
@@ -155,17 +156,18 @@ func (a *SpilloverArray) Len() int {
 // as well as the level at which that offset occurs
 func (a *SpilloverArray) findOffset(idx int) (level, offset int) {
 	var i, x int
-	for i, x = range a.levelCount {
+	for i, x = range a.levelOff {
+		count := a.levelCount(i)
 		if idx == 0 {
-			return i, a.levelOff[i]
+			return i, x
 		}
-		if x > idx {
-			return i, a.levelOff[i] + idx
+		if count > idx {
+			return i, x + idx
 		}
-		idx -= x
+		idx -= count
 	}
 	if idx == 0 {
-		return i, a.levelOff[i] + a.levelCount[i]
+		return i, a.levelOff[i] + a.levelCount(i)
 	}
 	panic(fmt.Sprintf("offset too large %d", idx))
 }
@@ -175,21 +177,21 @@ func (a *SpilloverArray) levelTotalCapacity(l int) int {
 }
 
 func (a *SpilloverArray) levelUsage(l int) int {
-	return a.levelCount[l]
+	return a.levelCount(l)
 }
 
 func (a *SpilloverArray) levelFree(l int) int {
-	return a.levelTotalCapacity(l) - a.levelCount[l]
+	return a.levelTotalCapacity(l) - a.levelCount(l)
 }
 
 func (a *SpilloverArray) levels() int {
-	return len(a.levelCount)
+	return len(a.levelOff)
 }
 
 func (a *SpilloverArray) checkInvariants() {
 	s := 0
-	for _, x := range a.levelCount {
-		s += x
+	for i := range a.levelOff {
+		s += a.levelCount(i)
 	}
 	if s != a.length {
 		panic("length invariant broken")
@@ -213,10 +215,10 @@ func (a *SpilloverArray) PopCount(start, end int) uint64 {
 		return popcount.CountBytes(a.bytes[startoff:endoff])
 	}
 
-	count += popcount.CountBytes(a.bytes[startoff:a.levelStart[startl+1]])
+	count += popcount.CountBytes(a.bytes[startoff:a.levelStart(startl+1)])
 	count += popcount.CountBytes(a.bytes[a.levelOff[endl]:endoff])
 	for l := startl + 1; l < endl; l++ {
-		count += popcount.CountBytes(a.bytes[a.levelOff[l]:a.levelStart[l+1]])
+		count += popcount.CountBytes(a.bytes[a.levelOff[l]:a.levelStart(l+1)])
 	}
 	return count
 }

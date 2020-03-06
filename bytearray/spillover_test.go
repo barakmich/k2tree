@@ -6,8 +6,6 @@ func TestRebalanceSpillover(t *testing.T) {
 	a := &SpilloverArray{
 		bytes:      []byte{0x01, 0x02},
 		levelOff:   []int{0},
-		levelStart: []int{0},
-		levelCount: []int{2},
 		length:     2,
 		pagesize:   2,
 		highwater:  1,
