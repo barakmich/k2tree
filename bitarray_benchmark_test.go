@@ -5,14 +5,20 @@ import (
 	"testing"
 )
 
-func testPopulateRand(t testing.TB, ba newBitArrayFunc, n int) *K2Tree {
-	k2, err := newK2Tree(func() bitarray {
-		x := ba()
-		return newTraceArray(x)
-	}, Config{
-		TreeLayerDef: SixteenBitsPerLayer,
-		CellLayerDef: SixteenBitsPerLayer,
-	})
+func testPopulateRand(t testing.TB, ba newBitArrayFunc, n int, compare bool) *K2Tree {
+	createF := ba
+	if compare {
+		createF = func() bitarray {
+			x := ba()
+			return newCompareArray(&sliceArray{}, x)
+		}
+	}
+	k2, err := newK2Tree(
+		createF,
+		Config{
+			TreeLayerDef: SixteenBitsPerLayer,
+			CellLayerDef: SixteenBitsPerLayer,
+		})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -20,14 +26,20 @@ func testPopulateRand(t testing.TB, ba newBitArrayFunc, n int) *K2Tree {
 	return k2
 }
 
-func testPopulateIncremental(t testing.TB, ba newBitArrayFunc, n int) *K2Tree {
-	k2, err := newK2Tree(func() bitarray {
-		x := ba()
-		return newTraceArray(x)
-	}, Config{
-		TreeLayerDef: SixteenBitsPerLayer,
-		CellLayerDef: SixteenBitsPerLayer,
-	})
+func testPopulateIncremental(t testing.TB, ba newBitArrayFunc, n int, compare bool) *K2Tree {
+	createF := ba
+	if compare {
+		createF = func() bitarray {
+			x := ba()
+			return newCompareArray(&sliceArray{}, x)
+		}
+	}
+	k2, err := newK2Tree(
+		createF,
+		Config{
+			TreeLayerDef: SixteenBitsPerLayer,
+			CellLayerDef: SixteenBitsPerLayer,
+		})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +50,7 @@ func testPopulateIncremental(t testing.TB, ba newBitArrayFunc, n int) *K2Tree {
 func TestRandPop50k(t *testing.T) {
 	for _, bitarray := range testBitArrayTypes {
 		t.Run(fmt.Sprintf(bitarray.name), func(t *testing.T) {
-			k2 := testPopulateRand(t, bitarray.create, 50000)
+			k2 := testPopulateRand(t, bitarray.create, 50000, true)
 			t.Logf("%f bpl", k2.Stats().BitsPerLink)
 		})
 	}
@@ -47,7 +59,7 @@ func TestRandPop50k(t *testing.T) {
 func TestIncPop50k(t *testing.T) {
 	for _, bitarray := range testBitArrayTypes {
 		t.Run(fmt.Sprintf(bitarray.name), func(t *testing.T) {
-			k2 := testPopulateIncremental(t, bitarray.create, 50000)
+			k2 := testPopulateIncremental(t, bitarray.create, 50000, true)
 			t.Logf("%f bpl", k2.Stats().BitsPerLink)
 		})
 	}
@@ -57,8 +69,7 @@ func BenchmarkRandPop50k(b *testing.B) {
 	for _, bitarray := range testBitArrayTypes {
 		b.Run(fmt.Sprintf(bitarray.name), func(b *testing.B) {
 			for n := 0; n < b.N; n++ {
-				k2 := testPopulateRand(b, bitarray.create, 50000)
-				b.SetBytes(int64(k2.tbits.(*traceArray).data.CountLengths) / 8)
+				testPopulateRand(b, bitarray.create, 50000, true)
 			}
 		})
 	}
@@ -69,7 +80,7 @@ func BenchmarkRandPop100k(b *testing.B) {
 		b.Run(fmt.Sprintf(bitarray.name), func(b *testing.B) {
 			var k2 *K2Tree
 			for n := 0; n < b.N; n++ {
-				k2 = testPopulateRand(b, bitarray.create, 100000)
+				k2 = testPopulateRand(b, bitarray.create, 100000, false)
 				stats := k2.Stats()
 				b.ReportMetric(stats.BitsPerLink, "bits/link")
 			}
@@ -83,13 +94,12 @@ func BenchmarkIncPop1M(b *testing.B) {
 			var k2 *K2Tree
 			for n := 0; n < b.N; n++ {
 				var err error
-				k2, err = newK2Tree(func() bitarray {
-					x := bitarrayt.create()
-					return newTraceArray(x)
-				}, Config{
-					TreeLayerDef: SixteenBitsPerLayer,
-					CellLayerDef: SixteenBitsPerLayer,
-				})
+				k2, err = newK2Tree(
+					bitarrayt.create,
+					Config{
+						TreeLayerDef: SixteenBitsPerLayer,
+						CellLayerDef: SixteenBitsPerLayer,
+					})
 				if err != nil {
 					b.Fatal(err)
 				}

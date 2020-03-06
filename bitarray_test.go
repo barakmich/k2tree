@@ -3,6 +3,8 @@ package k2tree
 import (
 	"fmt"
 	"testing"
+
+	"git.barakmich.com/barak/k2tree/bytearray"
 )
 
 var curFunc newBitArrayFunc
@@ -52,6 +54,12 @@ var testBitArrayTypes []bitArrayType = []bitArrayType{
 			return &sliceArray{}
 		},
 		name: "Slice",
+	},
+	{
+		create: func() bitarray {
+			return newByteArray(bytearray.NewSlice())
+		},
+		name: "ByteArray",
 	},
 	{
 		create: func() bitarray {
