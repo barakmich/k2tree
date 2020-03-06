@@ -3,6 +3,8 @@ package k2tree
 import (
 	"fmt"
 	"testing"
+
+	"git.barakmich.com/barak/k2tree/bytearray"
 )
 
 func testPopulateRand(t testing.TB, ba newBitArrayFunc, n int, compare bool) *K2Tree {
@@ -190,6 +192,24 @@ var unindexedBitArrayTypes []bitArrayType = []bitArrayType{
 		},
 		name: "Paged128kb",
 	},
+	{
+		create: func() bitarray {
+			return newByteArray(bytearray.NewSlice())
+		},
+		name: "ByteArray:Slice",
+	},
+	{
+		create: func() bitarray {
+			return newByteArray(bytearray.NewFrontSlice(1024))
+		},
+		name: "ByteArray:Front",
+	},
+	{
+		create: func() bitarray {
+			return newByteArray(bytearray.NewSpillover(4096, 0.8, 0.3, false))
+		},
+		name: "ByteArray:Spill:80:30:1x",
+	},
 }
 
 var fastBitArrayTypes []bitArrayType = []bitArrayType{
@@ -207,6 +227,24 @@ var fastBitArrayTypes []bitArrayType = []bitArrayType{
 	},
 	{
 		create: func() bitarray {
+			return newInt16Index(newByteArray(bytearray.NewSlice()))
+		},
+		name: "Int16BASlice",
+	},
+	{
+		create: func() bitarray {
+			return newInt16Index(newByteArray(bytearray.NewFrontSlice(1024)))
+		},
+		name: "Int16BAFront",
+	},
+	{
+		create: func() bitarray {
+			return newInt16Index(newByteArray(bytearray.NewSpillover(4096, 0.8, 0.3, false)))
+		},
+		name: "Int16BASpill4k1x",
+	},
+	{
+		create: func() bitarray {
 			return newBinaryLRUIndex(&sliceArray{}, 128)
 		},
 		name: "LRU128",
@@ -216,6 +254,24 @@ var fastBitArrayTypes []bitArrayType = []bitArrayType{
 			return newBinaryLRUIndex(newPagedSliceArray(128*1024), 128)
 		},
 		name: "LRU128Paged128kb",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(newByteArray(bytearray.NewSlice()), 128)
+		},
+		name: "LRU128BASlice",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(newByteArray(bytearray.NewSpillover(4096, 0.8, 0.3, false)), 128)
+		},
+		name: "LRU128BASpill4k1x",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(newByteArray(bytearray.NewSpillover(32*1024, 0.8, 0.3, false)), 128)
+		},
+		name: "LRU128BASpill32k1x",
 	},
 	{
 		create: func() bitarray {
@@ -245,15 +301,15 @@ var testK2Configs []k2configTest = []k2configTest{
 		config: SixteenSixteenConfig,
 		name:   "16x16",
 	},
-	{
-		config: SixtySixteenConfig,
-		name:   "64x16",
-	},
-	{
-		config: Config{
-			TreeLayerDef: TwoFiftySixBitsPerLayer,
-			CellLayerDef: SixteenBitsPerLayer,
-		},
-		name: "256x16",
-	},
+	//{
+	//config: SixtySixteenConfig,
+	//name:   "64x16",
+	//},
+	//{
+	//config: Config{
+	//TreeLayerDef: TwoFiftySixBitsPerLayer,
+	//CellLayerDef: SixteenBitsPerLayer,
+	//},
+	//name: "256x16",
+	//},
 }
