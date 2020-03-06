@@ -87,6 +87,12 @@ var arrayTypes []testarraytype = []testarraytype{
 		makeArray: func() ByteArray {
 			return NewSpillover(4096, 0.8, 0.3, false)
 		},
-		name: "Spillover::1024:80:30:1x",
+		name: "Spillover::4096:80:30:1x",
+	},
+	{
+		makeArray: func() ByteArray {
+			return NewSpillover(32*1024, 0.8, 0.3, false)
+		},
+		name: "Spillover::32k:80:30:1x",
 	},
 }

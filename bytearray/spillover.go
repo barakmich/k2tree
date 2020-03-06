@@ -3,6 +3,7 @@ package bytearray
 import (
 	"fmt"
 	"math"
+	"math/bits"
 
 	"github.com/tmthrgd/go-popcount"
 )
@@ -10,6 +11,7 @@ import (
 type SpilloverArray struct {
 	bytes      []byte
 	levelOff   []int
+	levelCum   []int
 	length     int
 	pagesize   int
 	highwater  int
@@ -35,10 +37,31 @@ func NewSpillover(pagesize int, highwaterPercentage, lowUtilization float64, mul
 		bytes:      make([]byte, pagesize),
 		levelOff:   []int{pagesize},
 		length:     0,
+		levelCum:   []int{0},
 		pagesize:   pagesize,
 		highwater:  hw,
 		low:        low,
 		multiplier: multiplier,
+	}
+}
+
+func (a *SpilloverArray) updateTree(level, delta int) {
+	var req int
+	if a.levels() == 1 {
+		req = 1
+	} else {
+		req = bits.Len64(uint64(a.levels() - 1))
+	}
+	treeidx := 0
+	for req > 0 {
+		isEmpty := (level & (0x1 << (req - 1))) == 0
+		if isEmpty {
+			a.levelCum[treeidx] += delta
+			treeidx = (treeidx << 1) + 1
+		} else {
+			treeidx = (treeidx << 1) + 2
+		}
+		req--
 	}
 }
 
@@ -101,6 +124,7 @@ func (a *SpilloverArray) insertIntoLevel(level int, absindex int, b []byte) {
 	a.levelOff[level] -= len(b)
 	a.length += len(b)
 	copy(a.bytes[absindex-len(b):], b)
+	a.updateTree(level, len(b))
 }
 
 func (a *SpilloverArray) rebalance() {
@@ -119,12 +143,31 @@ func (a *SpilloverArray) rebalance() {
 			copy(a.bytes[a.levelOff[l+1]:], a.bytes[a.levelStart(l+1)-toMove:a.levelStart(l+1)])
 			copy(a.bytes[a.levelOff[l]+toMove:a.levelStart(l+1)], a.bytes[a.levelOff[l]:])
 			a.levelOff[l] += toMove
+			a.updateTree(l+1, toMove)
+			a.updateTree(l, -toMove)
 		}
 	}
 }
 
 func (a *SpilloverArray) createNewLevel() {
 	newLevel := a.levels()
+	if newLevel != 1 {
+		h := bits.Len64(uint64(newLevel))
+		if h > bits.Len64(uint64(newLevel-1)) {
+			newCum := make([]int, (len(a.levelCum)*2)+1)
+			i := 1
+			off := 1
+			for len(a.levelCum) > 0 {
+				copy(newCum[off:], a.levelCum[0:i])
+				a.levelCum = a.levelCum[i:]
+				i = i << 1
+				off += i
+			}
+			copy(newCum[1:], a.levelCum)
+			a.levelCum = newCum
+			a.levelCum[0] = a.length
+		}
+	}
 	a.bytes = append(a.bytes, make([]byte, a.levelTotalCapacity(newLevel))...)
 	a.levelOff = append(a.levelOff, len(a.bytes))
 }
@@ -155,21 +198,29 @@ func (a *SpilloverArray) Len() int {
 // that corresponds with the abstracted offset
 // as well as the level at which that offset occurs
 func (a *SpilloverArray) findOffset(idx int) (level, offset int) {
-	var i, x int
-	for i, x = range a.levelOff {
-		count := a.levelCount(i)
-		if idx == 0 {
-			return i, x
-		}
-		if count > idx {
-			return i, x + idx
-		}
-		idx -= count
+	if idx > a.length {
+		panic("offset too large")
+	}
+	if idx == a.length {
+		return a.levels() - 1, len(a.bytes)
 	}
 	if idx == 0 {
-		return i, a.levelOff[i] + a.levelCount(i)
+		return 0, a.levelOff[0]
 	}
-	panic(fmt.Sprintf("offset too large %d", idx))
+	t := 0
+	level = 0
+	for t < len(a.levelCum) {
+		level = level << 1
+		val := a.levelCum[t]
+		if idx >= val {
+			idx -= val
+			level |= 0x1
+			t = (t << 1) + 2
+		} else {
+			t = (t << 1) + 1
+		}
+	}
+	return level, a.levelOff[level] + idx
 }
 
 func (a *SpilloverArray) levelTotalCapacity(l int) int {
