@@ -103,6 +103,18 @@ var testBitArrayTypes []bitArrayType = []bitArrayType{
 		},
 		name: "LRU128Paged100k",
 	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(newByteArray(bytearray.NewSpillover(16*1024, 0.9, 0.4, false)), 128)
+		},
+		name: "LRU128Spill16k1x",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(newByteArray(bytearray.NewSpillover(16*1024, 0.9, 0.4, true)), 128)
+		},
+		name: "LRU128Spill16k2x",
+	},
 }
 
 func TestBitarrayTypes(t *testing.T) {
