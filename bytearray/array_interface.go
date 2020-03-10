@@ -8,6 +8,7 @@ type ByteArray interface {
 	Get(idx int) byte
 	Insert(idx int, b []byte)
 	PopCount(start, end int) uint64
+	Copy(from, to, n int)
 }
 
 var _ ByteArray = &SpilloverArray{}
@@ -44,4 +45,8 @@ func (s *SliceArray) Insert(idx int, b []byte) {
 
 func (s *SliceArray) PopCount(start, end int) uint64 {
 	return popcount.CountBytes(s.bytes[start:end])
+}
+
+func (s *SliceArray) Copy(from, to, n int) {
+	copy(s.bytes[to:], s.bytes[from:from+n])
 }

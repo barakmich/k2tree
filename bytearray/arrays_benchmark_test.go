@@ -25,6 +25,7 @@ func BenchmarkInsertPatternArray(b *testing.B) {
 }
 
 func BenchmarkSpilloverMatrix(b *testing.B) {
+	b.Skip()
 	highwaters := []float64{0.75, 0.8, 0.9}
 	lowwaters := []float64{0.3, 0.5, 0.7}
 	multipliers := []bool{false, true}
@@ -94,5 +95,11 @@ var arrayTypes []testarraytype = []testarraytype{
 			return NewSpillover(32*1024, 0.8, 0.3, false)
 		},
 		name: "Spillover::32k:80:30:1x",
+	},
+	{
+		makeArray: func() ByteArray {
+			return NewInt16Index(&SliceArray{})
+		},
+		name: "Int16Slice::::",
 	},
 }

@@ -46,3 +46,7 @@ func (f *FrontSlice) Insert(idx int, b []byte) {
 func (f *FrontSlice) PopCount(start, end int) uint64 {
 	return popcount.CountBytes(f.bytes[f.off+start : f.off+end])
 }
+
+func (f *FrontSlice) Copy(from, to, n int) {
+	copy(f.bytes[f.off+to:], f.bytes[f.off+from:f.off+from+n])
+}

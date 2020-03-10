@@ -81,6 +81,12 @@ var testBitArrayTypes []bitArrayType = []bitArrayType{
 	},
 	{
 		create: func() bitarray {
+			return newByteArray(bytearray.NewInt16Index(bytearray.NewSlice()))
+		},
+		name: "BAInt16",
+	},
+	{
+		create: func() bitarray {
 			return newBinaryLRUIndex(&sliceArray{}, 2)
 		},
 		name: "LRU2",

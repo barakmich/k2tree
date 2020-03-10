@@ -51,6 +51,11 @@ func TestCompareBaselineFront(t *testing.T) {
 	testCompareBaseline(t, vec)
 }
 
+func TestCompareBaselineInt16(t *testing.T) {
+	vec := NewInt16Index(NewSlice())
+	testCompareBaseline(t, vec)
+}
+
 var insertTestVectorCache []int = nil
 
 func insertTestVector() []int {

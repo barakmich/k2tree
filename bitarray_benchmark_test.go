@@ -239,9 +239,21 @@ var fastBitArrayTypes []bitArrayType = []bitArrayType{
 	},
 	{
 		create: func() bitarray {
+			return newByteArray(bytearray.NewInt16Index(bytearray.NewSlice()))
+		},
+		name: "BAInt16Slice",
+	},
+	{
+		create: func() bitarray {
 			return newInt16Index(newByteArray(bytearray.NewSpillover(4096, 0.8, 0.3, false)))
 		},
 		name: "Int16BASpill4k1x",
+	},
+	{
+		create: func() bitarray {
+			return newByteArray(bytearray.NewInt16Index(bytearray.NewSpillover(4096, 0.8, 0.3, false)))
+		},
+		name: "BAInt16Spill4k1x",
 	},
 	{
 		create: func() bitarray {

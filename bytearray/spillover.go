@@ -1,6 +1,7 @@
 package bytearray
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"math/bits"
@@ -272,4 +273,60 @@ func (a *SpilloverArray) PopCount(start, end int) uint64 {
 		count += popcount.CountBytes(a.bytes[a.levelOff[l]:a.levelStart(l+1)])
 	}
 	return count
+}
+
+func (a *SpilloverArray) Copy(from, to, n int) {
+	buf := bufPool.Get().(*bytes.Buffer)
+	buf.Grow(n)
+
+	// Copy into the buffer
+	startl, startoff := a.findOffset(from)
+	endl, endoff := a.findOffset(from + n)
+
+	if startl == endl {
+		buf.Write(a.bytes[startoff:endoff])
+	} else {
+		buf.Write(a.bytes[startoff:a.levelStart(startl+1)])
+		for l := startl + 1; l < endl; l++ {
+			buf.Write(a.bytes[a.levelOff[l]:a.levelStart(l+1)])
+		}
+		buf.Write(a.bytes[a.levelOff[endl]:endoff])
+	}
+
+	// Copy out of the buffer
+	startl, startoff = a.findOffset(to)
+	endl, endoff = a.findOffset(to + n)
+	if startl == endl {
+		copied, err := buf.Read(a.bytes[startoff:endoff])
+		if err != nil {
+			panic(err)
+		}
+		if n != copied {
+			panic("didn't copy everything?")
+		}
+	} else {
+		copied := 0
+		read, err := buf.Read(a.bytes[startoff:a.levelStart(startl+1)])
+		if err != nil {
+			panic(err)
+		}
+		copied += read
+		for l := startl + 1; l < endl; l++ {
+			read, err := buf.Read(a.bytes[a.levelOff[l]:a.levelStart(l+1)])
+			if err != nil {
+				panic(err)
+			}
+			copied += read
+		}
+		read, err = buf.Read(a.bytes[a.levelOff[endl]:endoff])
+		if err != nil {
+			panic(err)
+		}
+		copied += read
+		if n != copied {
+			panic("didn't copy everything")
+		}
+	}
+
+	bufPool.Put(buf)
 }
