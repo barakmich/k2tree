@@ -46,6 +46,11 @@ func testCompareBaseline(t *testing.T, vec_b ByteArray) {
 	}
 }
 
+func TestCompareBaselinePaged(t *testing.T) {
+	vec := NewPaged(128, 0.8, 0.3)
+	testCompareBaseline(t, vec)
+}
+
 func TestCompareBaselineFront(t *testing.T) {
 	vec := NewFrontSlice(1024)
 	testCompareBaseline(t, vec)

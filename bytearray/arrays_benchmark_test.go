@@ -80,6 +80,12 @@ var arrayTypes []testarraytype = []testarraytype{
 	},
 	{
 		makeArray: func() ByteArray {
+			return NewPaged(4096, 0.8, 0.3)
+		},
+		name: "Paged::4096:80:30",
+	},
+	{
+		makeArray: func() ByteArray {
 			return NewSpillover(1024, 0.8, 0.5, true)
 		},
 		name: "Spillover::1024:80:50:2x",
