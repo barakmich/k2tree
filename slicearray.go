@@ -110,98 +110,47 @@ func (s *sliceArray) Insert(n, at int) (err error) {
 	if n == 0 {
 		return nil
 	}
-	if n%4 != 0 {
-		panic("can only extend a sliceArray by nibbles (multiples of 4)")
-	}
 	if at%4 != 0 {
 		panic("can only insert a sliceArray at offset multiples of 4")
 	}
-	if n%8 == 4 {
-		err = s.insertFour(n, at)
-	} else {
+	if n%8 == 0 {
 		err = s.insertEight(n, at)
+	} else if n == 4 {
+		err = s.insertFour(at)
+
+	} else if n%4 == 0 {
+		mult8 := (n >> 3) << 3
+		err = s.insertEight(mult8, at)
+		if err != nil {
+			return err
+		}
+		err = s.insertFour(at)
+	} else {
+		panic("can only extend a sliceArray by nibbles or multiples of 8")
+	}
+	if err != nil {
+		return err
 	}
 	s.length = s.length + n
-	return err
-}
-
-func (s *sliceArray) insertFour(n, at int) error {
-	if s.length%8 == 4 {
-		// We have some extra bits
-		return s.insertFourExtra(n, at)
-	}
-	newbytes := (n >> 3) + 1
-	s.bytes = append(s.bytes, make([]byte, newbytes)...)
-	if at == s.length {
-		return nil
-	}
-
-	off := at >> 3
-	if at%8 == 4 {
-		copy(s.bytes[off+newbytes:], s.bytes[off+1:])
-		for x := 1; x < newbytes; x++ {
-			s.bytes[off+x] = 0x00
-		}
-		a := s.bytes[off] << 4
-		s.bytes[off] &= 0xF0
-		for x := off + newbytes; x < len(s.bytes); x++ {
-			t := s.bytes[x] << 4
-			b := s.bytes[x] >> 4
-			s.bytes[x] = a | b
-			a = t
-		}
-	} else {
-		if newbytes != 0 {
-			copy(s.bytes[off+newbytes:], s.bytes[off:])
-			for x := 0; x < newbytes; x++ {
-				s.bytes[off+x] = 0x00
-			}
-		}
-		for x := off + newbytes - 1; x < len(s.bytes)-1; x++ {
-			b := s.bytes[x+1] >> 4
-			s.bytes[x] = s.bytes[x]<<4 | b
-		}
-		s.bytes[len(s.bytes)-1] = s.bytes[len(s.bytes)-1] << 4
-	}
 	return nil
 }
 
-func (s *sliceArray) insertFourExtra(n, at int) error {
-	newbytes := (n - 4) >> 3
-	s.bytes = append(s.bytes, make([]byte, newbytes)...)
-	if at == s.length {
-		return nil
+func (s *sliceArray) insertFour(at int) error {
+	if s.length%8 == 0 {
+		// We need more space
+		s.bytes = append(s.bytes, 0x00)
 	}
 	off := at >> 3
-	if at%8 == 4 {
-		if newbytes != 0 {
-			copy(s.bytes[off+1+newbytes:], s.bytes[off+1:])
-			for x := 0; x < newbytes; x++ {
-				s.bytes[off+1+x] = 0x00
-			}
-		}
-		a := s.bytes[off] << 4
+	var inbyte byte
+	if at%8 != 0 {
+		inbyte = s.bytes[off]
 		s.bytes[off] &= 0xF0
-		for x := off + newbytes + 1; x < len(s.bytes); x++ {
-			t := s.bytes[x] << 4
-			s.bytes[x] = a | (s.bytes[x] >> 4)
-			a = t
-		}
-	} else {
-		if newbytes != 0 {
-			copy(s.bytes[off+newbytes:], s.bytes[off:])
-			for x := 0; x < newbytes; x++ {
-				s.bytes[off+x] = 0x00
-			}
-		}
-		var a byte
-		for x := off + newbytes; x < len(s.bytes); x++ {
-			t := s.bytes[x] << 4
-			s.bytes[x] = a | (s.bytes[x] >> 4)
-			a = t
-		}
+		off++
 	}
-
+	outByte := insertFourBits(s.bytes[off:], inbyte)
+	if outByte != 0x00 {
+		panic("Overshot")
+	}
 	return nil
 }
 
