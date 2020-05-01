@@ -90,6 +90,29 @@ func BenchmarkRandPop100k(b *testing.B) {
 	}
 }
 
+func BenchmarkIncPop50k(b *testing.B) {
+	for _, bitarrayt := range testBitArrayTypes {
+		b.Run(fmt.Sprintf(bitarrayt.name), func(b *testing.B) {
+			var k2 *K2Tree
+			for n := 0; n < b.N; n++ {
+				var err error
+				k2, err = newK2Tree(
+					bitarrayt.create,
+					Config{
+						TreeLayerDef: SixteenBitsPerLayer,
+						CellLayerDef: SixteenBitsPerLayer,
+					})
+				if err != nil {
+					b.Fatal(err)
+				}
+				populateIncrementalTree(50000, k2)
+			}
+			stats := k2.Stats()
+			b.ReportMetric(stats.BitsPerLink, "bits/link")
+		})
+	}
+}
+
 func BenchmarkIncPop1M(b *testing.B) {
 	for _, bitarrayt := range fastBitArrayTypes {
 		b.Run(fmt.Sprintf(bitarrayt.name), func(b *testing.B) {
@@ -206,15 +229,9 @@ var unindexedBitArrayTypes []bitArrayType = []bitArrayType{
 	},
 	{
 		create: func() bitarray {
-			return newByteArray(bytearray.NewSpillover(4096, 0.8, 0.3, false))
+			return newByteArray(bytearray.NewPaged(4096, 0.8, 0.3))
 		},
-		name: "ByteArray:Spill:4096:80:30:1x",
-	},
-	{
-		create: func() bitarray {
-			return newByteArray(bytearray.NewSpillover(32*1024, 0.8, 0.3, false))
-		},
-		name: "ByteArray:Spill:32k:80:30:1x",
+		name: "ByteArray:Paged:4096:80:30",
 	},
 }
 
@@ -245,21 +262,9 @@ var fastBitArrayTypes []bitArrayType = []bitArrayType{
 	},
 	{
 		create: func() bitarray {
-			return newInt16Index(newByteArray(bytearray.NewSpillover(4096, 0.8, 0.3, false)))
+			return newInt16Index(newByteArray(bytearray.NewPaged(4096, 0.8, 0.3)))
 		},
-		name: "Int16BASpill4k1x",
-	},
-	{
-		create: func() bitarray {
-			return newByteArray(bytearray.NewInt16Index(bytearray.NewSpillover(4096, 0.8, 0.3, false)))
-		},
-		name: "BAInt16Spill4k1x",
-	},
-	{
-		create: func() bitarray {
-			return newInt16Index(newByteArray(bytearray.NewSpillover(32*1024, 0.8, 0.3, false)))
-		},
-		name: "Int16BASpill32k1x",
+		name: "Int16BAPaged4k8030",
 	},
 	{
 		create: func() bitarray {
@@ -281,27 +286,15 @@ var fastBitArrayTypes []bitArrayType = []bitArrayType{
 	},
 	{
 		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewSpillover(4096, 0.8, 0.3, false)), 128)
+			return newBinaryLRUIndex(newByteArray(bytearray.NewPaged(4096, 0.8, 0.3)), 128)
 		},
-		name: "LRU128BASpill4k1x",
+		name: "LRU128BAPaged4k8030",
 	},
 	{
 		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewSpillover(32*1024, 0.8, 0.3, false)), 128)
+			return newBinaryLRUIndex(newByteArray(bytearray.NewPaged(1024*1024, 0.8, 0.3)), 128)
 		},
-		name: "LRU128BASpill32k1x",
-	},
-	{
-		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewSpillover(4096, 0.9, 0.75, false)), 128)
-		},
-		name: "LRU128BASpill4k1xh",
-	},
-	{
-		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewSpillover(32*1024, 0.9, 0.75, false)), 128)
-		},
-		name: "LRU128BASpill32k1xh",
+		name: "LRU128BAPaged1M8030",
 	},
 	{
 		create: func() bitarray {

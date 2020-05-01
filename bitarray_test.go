@@ -69,6 +69,12 @@ var testBitArrayTypes []bitArrayType = []bitArrayType{
 	},
 	{
 		create: func() bitarray {
+			return newByteArray(bytearray.NewPaged(1024, 0.8, 0.3))
+		},
+		name: "BAPaged1k8030",
+	},
+	{
+		create: func() bitarray {
 			return newQuartileIndex(&sliceArray{})
 		},
 		name: "QuartileIndex",
@@ -84,6 +90,12 @@ var testBitArrayTypes []bitArrayType = []bitArrayType{
 			return newByteArray(bytearray.NewInt16Index(bytearray.NewSlice()))
 		},
 		name: "BAInt16",
+	},
+	{
+		create: func() bitarray {
+			return newByteArray(bytearray.NewInt16Index(bytearray.NewPaged(128*1024, 0.8, 0.3)))
+		},
+		name: "BAInt16Paged128k8030",
 	},
 	{
 		create: func() bitarray {
@@ -111,15 +123,9 @@ var testBitArrayTypes []bitArrayType = []bitArrayType{
 	},
 	{
 		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewSpillover(16*1024, 0.9, 0.4, false)), 128)
+			return newBinaryLRUIndex(newByteArray(bytearray.NewPaged(16*1024, 0.8, 0.3)), 128)
 		},
-		name: "LRU128Spill16k1x",
-	},
-	{
-		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewSpillover(16*1024, 0.9, 0.4, true)), 128)
-		},
-		name: "LRU128Spill16k2x",
+		name: "LRU128PagedBA16k8030",
 	},
 }
 
