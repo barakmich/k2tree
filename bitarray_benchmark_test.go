@@ -91,31 +91,8 @@ func BenchmarkRandPop100k(b *testing.B) {
 }
 
 func BenchmarkIncPop50k(b *testing.B) {
-	for _, bitarrayt := range testBitArrayTypes {
-		b.Run(fmt.Sprintf(bitarrayt.name), func(b *testing.B) {
-			var k2 *K2Tree
-			for n := 0; n < b.N; n++ {
-				var err error
-				k2, err = newK2Tree(
-					bitarrayt.create,
-					Config{
-						TreeLayerDef: SixteenBitsPerLayer,
-						CellLayerDef: SixteenBitsPerLayer,
-					})
-				if err != nil {
-					b.Fatal(err)
-				}
-				populateIncrementalTree(50000, k2)
-			}
-			stats := k2.Stats()
-			b.ReportMetric(stats.BitsPerLink, "bits/link")
-		})
-	}
-}
-
-func BenchmarkIncPop1M(b *testing.B) {
-	for _, k2config := range testK2Configs {
-		for _, bitarrayt := range fastBitArrayTypes {
+	for _, k2config := range smallK2Configs {
+		for _, bitarrayt := range testBitArrayTypes {
 			b.Run(fmt.Sprint(k2config.name, bitarrayt.name), func(b *testing.B) {
 				var k2 *K2Tree
 				for n := 0; n < b.N; n++ {
@@ -127,12 +104,34 @@ func BenchmarkIncPop1M(b *testing.B) {
 					if err != nil {
 						b.Fatal(err)
 					}
-					populateIncrementalTree(1000000, k2)
+					populateIncrementalTree(50000, k2)
 				}
 				stats := k2.Stats()
 				b.ReportMetric(stats.BitsPerLink, "bits/link")
 			})
 		}
+
+	}
+}
+
+func BenchmarkIncPop1M(b *testing.B) {
+	for _, bitarrayt := range fastBitArrayTypes {
+		b.Run(fmt.Sprint(bitarrayt.name), func(b *testing.B) {
+			var k2 *K2Tree
+			for n := 0; n < b.N; n++ {
+				var err error
+				k2, err = newK2Tree(
+					bitarrayt.create,
+					SixteenSixteenConfig,
+				)
+				if err != nil {
+					b.Fatal(err)
+				}
+				populateIncrementalTree(1000000, k2)
+			}
+			stats := k2.Stats()
+			b.ReportMetric(stats.BitsPerLink, "bits/link")
+		})
 	}
 }
 
@@ -313,6 +312,17 @@ var fastBitArrayTypes []bitArrayType = []bitArrayType{
 type k2configTest struct {
 	config Config
 	name   string
+}
+
+var smallK2Configs []k2configTest = []k2configTest{
+	{
+		config: FourFourConfig,
+		name:   "4x4",
+	},
+	{
+		config: SixteenFourConfig,
+		name:   "16x4",
+	},
 }
 
 var testK2Configs []k2configTest = []k2configTest{
