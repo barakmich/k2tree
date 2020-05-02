@@ -150,7 +150,7 @@ func BenchmarkIncPop50M(b *testing.B) {
 				if err != nil {
 					b.Fatal(err)
 				}
-				populateIncrementalTree(50000000, k2, true)
+				populateIncrementalTree(100000000, k2, true)
 			}
 			stats := k2.Stats()
 			b.ReportMetric(stats.BitsPerLink, "bits/link")

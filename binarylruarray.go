@@ -11,6 +11,7 @@ type binaryLRUIndex struct {
 	offsets       []int
 	counts        []int
 	cacheHistory  *list.List
+	historyMap    []*list.Element
 	size          int
 	cacheDistance int
 }
@@ -125,12 +126,7 @@ func (b *binaryLRUIndex) getClosestCache(to int) (count, at, idx int) {
 }
 
 func (b *binaryLRUIndex) cacheHit(idx int) {
-	for e := b.cacheHistory.Front(); e != nil; e = e.Next() {
-		if e.Value.(int) == idx {
-			b.cacheHistory.MoveToFront(e)
-			return
-		}
-	}
+	b.cacheHistory.MoveToFront(b.historyMap[idx])
 }
 
 func (b *binaryLRUIndex) cacheAdd(val, at int) {
@@ -151,14 +147,14 @@ func (b *binaryLRUIndex) cacheAdd(val, at int) {
 			e.Value = t
 		}
 	}
-	b.cacheHistory.PushFront(idx)
+	b.historyMap = append(b.historyMap, nil)
+	copy(b.historyMap[idx+1:], b.historyMap[idx:])
+	b.historyMap[idx] = b.cacheHistory.PushFront(idx)
 }
 
 func (b *binaryLRUIndex) cacheEvict() {
 	//pop
-	lastelem := b.cacheHistory.Back()
-	todel := lastelem.Value.(int)
-	b.cacheHistory.Remove(lastelem)
+	todel := b.cacheHistory.Remove(b.cacheHistory.Back()).(int)
 	for e := b.cacheHistory.Front(); e != nil; e = e.Next() {
 		t := e.Value.(int)
 		if t >= todel {
@@ -168,6 +164,7 @@ func (b *binaryLRUIndex) cacheEvict() {
 	}
 	b.offsets = append(b.offsets[:todel], b.offsets[todel+1:]...)
 	b.counts = append(b.counts[:todel], b.counts[todel+1:]...)
+	b.historyMap = append(b.historyMap[:todel], b.historyMap[todel+1:]...)
 }
 
 // Total returns the total number of set bits.

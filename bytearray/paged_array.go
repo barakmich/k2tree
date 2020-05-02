@@ -86,8 +86,8 @@ func (p *PagedArray) findOffset(idx int) (level int, offset int) {
 	if idx == p.length {
 		return p.levels() - 1, p.levelLength[len(p.pages)-1]
 	}
-	if idx == 0 {
-		return 0, 0
+	if idx < p.levelLength[0] {
+		return 0, idx
 	}
 	t := 0
 	level = 0
