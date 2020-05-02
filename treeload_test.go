@@ -48,7 +48,7 @@ func populateIncrementalTree(nLinks int, k2 *K2Tree, debug bool) (maxrow int, ma
 	timebefore := time.Now()
 
 	for i := 0; i < nLinks; i++ {
-		if debug && i%100000 == 0 {
+		if debug && i%1000000 == 0 {
 			timeafter := time.Now()
 			td := timeafter.Sub(timebefore)
 			timebefore = timeafter

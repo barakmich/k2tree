@@ -150,7 +150,7 @@ func BenchmarkIncPop50M(b *testing.B) {
 				if err != nil {
 					b.Fatal(err)
 				}
-				populateIncrementalTree(100000000, k2, true)
+				populateIncrementalTree(50000000, k2, true)
 			}
 			stats := k2.Stats()
 			b.ReportMetric(stats.BitsPerLink, "bits/link")
@@ -261,21 +261,9 @@ var unindexedBitArrayTypes []bitArrayType = []bitArrayType{
 var tenMillionBitArrayTypes []bitArrayType = []bitArrayType{
 	{
 		create: func() bitarray {
-			return newInt16Index(&sliceArray{})
+			return newBinaryLRUIndex(NewPagedBitarray(1024*128, 0.8, 0.3), 64)
 		},
-		name: "Int16",
-	},
-	{
-		create: func() bitarray {
-			return newBinaryLRUIndex(&sliceArray{}, 64)
-		},
-		name: "LRU64",
-	},
-	{
-		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewPaged(1024*128, 0.8, 0.3)), 64)
-		},
-		name: "LRU64BAPaged128k8030",
+		name: "LRU64Pagedbit128k8030",
 	},
 }
 

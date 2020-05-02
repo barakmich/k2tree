@@ -1,7 +1,6 @@
 package k2tree
 
 import (
-	"container/list"
 	"fmt"
 	"math"
 )
@@ -10,9 +9,9 @@ type binaryLRUIndex struct {
 	bits          bitarray
 	offsets       []int
 	counts        []int
-	cacheHistory  *list.List
-	historyMap    []*list.Element
+	historyMap    []int
 	size          int
+	tick          int
 	cacheDistance int
 }
 
@@ -24,14 +23,13 @@ const (
 	// instruction between known offsets in the cache and the overhead of
 	// maintaining the LRU. If the LRU gets cheaper to maintain, this may get
 	// decreased. If POPCNT gets faster, this may increase.
-	DefaultLRUCacheDistance = 1024
+	DefaultLRUCacheDistance = 512
 )
 
 func newBinaryLRUIndex(bits bitarray, size int) *binaryLRUIndex {
 	return &binaryLRUIndex{
 		bits:          bits,
 		size:          size,
-		cacheHistory:  list.New(),
 		cacheDistance: DefaultLRUCacheDistance,
 	}
 }
@@ -126,7 +124,8 @@ func (b *binaryLRUIndex) getClosestCache(to int) (count, at, idx int) {
 }
 
 func (b *binaryLRUIndex) cacheHit(idx int) {
-	b.cacheHistory.MoveToFront(b.historyMap[idx])
+	b.tick++
+	b.historyMap[idx] = b.tick
 }
 
 func (b *binaryLRUIndex) cacheAdd(val, at int) {
@@ -140,26 +139,19 @@ func (b *binaryLRUIndex) cacheAdd(val, at int) {
 	b.counts = append(b.counts, 0)
 	copy(b.counts[idx+1:], b.counts[idx:])
 	b.counts[idx] = val
-	for e := b.cacheHistory.Front(); e != nil; e = e.Next() {
-		t := e.Value.(int)
-		if e.Value.(int) >= idx {
-			t++
-			e.Value = t
-		}
-	}
-	b.historyMap = append(b.historyMap, nil)
+	b.historyMap = append(b.historyMap, 0)
 	copy(b.historyMap[idx+1:], b.historyMap[idx:])
-	b.historyMap[idx] = b.cacheHistory.PushFront(idx)
+	b.tick++
+	b.historyMap[idx] = b.tick
 }
 
 func (b *binaryLRUIndex) cacheEvict() {
-	//pop
-	todel := b.cacheHistory.Remove(b.cacheHistory.Back()).(int)
-	for e := b.cacheHistory.Front(); e != nil; e = e.Next() {
-		t := e.Value.(int)
-		if t >= todel {
-			t--
-			e.Value = t
+	var timedel int = math.MaxInt64
+	todel := -1
+	for i, time := range b.historyMap {
+		if time < timedel {
+			todel = i
+			timedel = time
 		}
 	}
 	b.offsets = append(b.offsets[:todel], b.offsets[todel+1:]...)
