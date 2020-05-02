@@ -237,6 +237,12 @@ var unindexedBitArrayTypes []bitArrayType = []bitArrayType{
 var fastBitArrayTypes []bitArrayType = []bitArrayType{
 	{
 		create: func() bitarray {
+			return &sliceArray{}
+		},
+		name: "Root",
+	},
+	{
+		create: func() bitarray {
 			return newInt16Index(&sliceArray{})
 		},
 		name: "Int16",
