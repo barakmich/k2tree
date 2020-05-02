@@ -109,95 +109,52 @@ func (b *byteArray) Insert(n, at int) (err error) {
 	if n == 0 {
 		return nil
 	}
-	if n%4 != 0 {
-		panic("can only extend a sliceArray by nibbles (multiples of 4)")
-	}
 	if at%4 != 0 {
 		panic("can only insert a sliceArray at offset multiples of 4")
 	}
-	if n%8 == 4 {
-		err = b.insertFour(n, at)
-	} else {
+	if n%8 == 0 {
 		err = b.insertEight(n, at)
+	} else if n == 4 {
+		err = b.insertFour(at)
+
+	} else if n%4 == 0 {
+		mult8 := (n >> 3) << 3
+		err = b.insertEight(mult8, at)
+		if err != nil {
+			return err
+		}
+		err = b.insertFour(at)
+	} else {
+		panic("can only extend a sliceArray by nibbles or multiples of 8")
+	}
+	if err != nil {
+		return err
 	}
 	b.length = b.length + n
-	return err
-}
-
-func (b *byteArray) insertFour(n, at int) error {
-	if b.length%8 == 4 {
-		// We have some extra bits
-		return b.insertFourExtra(n, at)
-	}
-	newbytesN := (n >> 3) + 1
-	newbytes := make([]byte, newbytesN)
-
-	if at == b.length {
-		b.bytes.Insert(b.bytes.Len(), newbytes)
-		return nil
-	}
-
-	off := at >> 3
-	if at%8 == 4 {
-		b.bytes.Insert(off+1, newbytes)
-		byteAtOff := b.bytes.Get(off)
-		a := byteAtOff << 4
-		b.bytes.Set(off, byteAtOff&0xF0)
-		for x := off + 1 + newbytesN; x < b.bytes.Len(); x++ {
-			byteAtOff = b.bytes.Get(x)
-			t := byteAtOff << 4
-			u := byteAtOff >> 4
-			b.bytes.Set(x-1, a|u)
-			a = t
-		}
-	} else {
-		if newbytesN != 0 {
-			b.bytes.Insert(off, newbytes)
-		}
-		for x := off + newbytesN - 1; x < b.bytes.Len()-1; x++ {
-			u := b.bytes.Get(x+1) >> 4
-			b.bytes.Set(x, b.bytes.Get(x)<<4|u)
-		}
-		b.bytes.Set(b.bytes.Len()-1, b.bytes.Get(b.bytes.Len()-1)<<4)
-	}
 	return nil
 }
 
-func (b *byteArray) insertFourExtra(n, at int) error {
-	newbytesN := (n - 4) >> 3
-	newbytes := make([]byte, newbytesN)
-	if at == b.length {
-		b.bytes.Insert(b.bytes.Len(), newbytes)
-		return nil
+func (b *byteArray) insertFour(at int) error {
+	if b.length%8 == 0 {
+		// We need more space
+		b.bytes.Insert(b.bytes.Len(), []byte{0x00})
 	}
-
 	off := at >> 3
-	if at%8 == 4 {
-		if newbytesN != 0 {
-			b.bytes.Insert(off+1, newbytes)
-		}
-		oldOff := b.bytes.Get(off)
-		a := oldOff << 4
-		b.bytes.Set(off, oldOff&0xF0)
-		for x := off + newbytesN + 1; x < b.bytes.Len(); x++ {
-			oldx := b.bytes.Get(x)
-			t := oldx << 4
-			b.bytes.Set(x, a|(oldx>>4))
-			a = t
-		}
-	} else {
-		if newbytesN != 0 {
-			b.bytes.Insert(off, newbytes)
-		}
-		var a byte
-		for x := off + newbytesN; x < b.bytes.Len(); x++ {
-			oldx := b.bytes.Get(x)
-			t := oldx << 4
-			b.bytes.Set(x, a|(oldx>>4))
-			a = t
-		}
+	var inbyte byte
+	if at%8 != 0 {
+		inbyte = b.bytes.Get(off)
+		b.bytes.Set(off, inbyte&0xF0)
+		off++
 	}
-
+	inbyte = inbyte << 4
+	for i := off; i < b.bytes.Len(); i++ {
+		t := b.bytes.Get(i)
+		b.bytes.Set(i, t>>4|inbyte)
+		inbyte = t << 4
+	}
+	if inbyte != 0x00 {
+		panic("Overshot")
+	}
 	return nil
 }
 

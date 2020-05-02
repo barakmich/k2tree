@@ -55,12 +55,12 @@ func TestInsertFourBits(t *testing.T) {
 	}
 }
 
-const FUZZ_ITER = 30
+const FUZZ_ITER = 3000
 
 func TestInsertFourFuzz(t *testing.T) {
 	for i := 0; i < FUZZ_ITER; i++ {
 		inbyte := byte(rand.Intn(256))
-		orig := generateByteString(rand.Intn(256))
+		orig := generateByteString((rand.Intn(256) * rand.Intn(256)) + 1)
 		bytestr := make([]byte, len(orig))
 		realbyte := make([]byte, len(orig))
 		copy(realbyte, orig)
