@@ -136,8 +136,8 @@ func BenchmarkIncPop1M(b *testing.B) {
 	}
 }
 
-func BenchmarkIncPop10M(b *testing.B) {
-	//b.Skip("Pop10M runs some stress tests to measure scalability")
+func BenchmarkIncPop50M(b *testing.B) {
+	//b.Skip("Pop50M runs some stress tests to measure scalability")
 	for _, bitarrayt := range tenMillionBitArrayTypes {
 		b.Run(fmt.Sprint(bitarrayt.name), func(b *testing.B) {
 			var k2 *K2Tree
@@ -150,7 +150,7 @@ func BenchmarkIncPop10M(b *testing.B) {
 				if err != nil {
 					b.Fatal(err)
 				}
-				populateIncrementalTree(10000000, k2, true)
+				populateIncrementalTree(50000000, k2, true)
 			}
 			stats := k2.Stats()
 			b.ReportMetric(stats.BitsPerLink, "bits/link")
