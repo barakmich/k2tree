@@ -45,7 +45,7 @@ func testPopulateIncremental(t testing.TB, ba newBitArrayFunc, n int, compare bo
 	if err != nil {
 		t.Fatal(err)
 	}
-	populateIncrementalTree(n, k2)
+	populateIncrementalTree(n, k2, false)
 	return k2
 }
 
@@ -104,7 +104,7 @@ func BenchmarkIncPop50k(b *testing.B) {
 					if err != nil {
 						b.Fatal(err)
 					}
-					populateIncrementalTree(50000, k2)
+					populateIncrementalTree(50000, k2, false)
 				}
 				stats := k2.Stats()
 				b.ReportMetric(stats.BitsPerLink, "bits/link")
@@ -127,10 +127,34 @@ func BenchmarkIncPop1M(b *testing.B) {
 				if err != nil {
 					b.Fatal(err)
 				}
-				populateIncrementalTree(1000000, k2)
+				populateIncrementalTree(1000000, k2, false)
 			}
 			stats := k2.Stats()
 			b.ReportMetric(stats.BitsPerLink, "bits/link")
+			b.ReportMetric(float64(stats.Bytes), "bytes")
+		})
+	}
+}
+
+func BenchmarkIncPop10M(b *testing.B) {
+	//b.Skip("Pop10M runs some stress tests to measure scalability")
+	for _, bitarrayt := range tenMillionBitArrayTypes {
+		b.Run(fmt.Sprint(bitarrayt.name), func(b *testing.B) {
+			var k2 *K2Tree
+			for n := 0; n < b.N; n++ {
+				var err error
+				k2, err = newK2Tree(
+					bitarrayt.create,
+					SixteenSixteenConfig,
+				)
+				if err != nil {
+					b.Fatal(err)
+				}
+				populateIncrementalTree(10000000, k2, true)
+			}
+			stats := k2.Stats()
+			b.ReportMetric(stats.BitsPerLink, "bits/link")
+			b.ReportMetric(float64(stats.Bytes), "bytes")
 		})
 	}
 }
@@ -144,7 +168,7 @@ func BenchmarkIncPopVar(b *testing.B) {
 					b.Fatal(err)
 				}
 				b.ResetTimer()
-				populateIncrementalTree(b.N, k2)
+				populateIncrementalTree(b.N, k2, false)
 				stats := k2.Stats()
 				b.ReportMetric(stats.BitsPerLink, "bits/link")
 			})
@@ -194,7 +218,7 @@ func BenchmarkIncUnindexed(b *testing.B) {
 				b.Fatal(err)
 			}
 			b.ResetTimer()
-			populateIncrementalTree(b.N, k2)
+			populateIncrementalTree(b.N, k2, false)
 			stats := k2.Stats()
 			b.ReportMetric(stats.BitsPerLink, "bits/link")
 		})
@@ -231,6 +255,27 @@ var unindexedBitArrayTypes []bitArrayType = []bitArrayType{
 			return newByteArray(bytearray.NewPaged(4096, 0.8, 0.3))
 		},
 		name: "ByteArray:Paged:4096:80:30",
+	},
+}
+
+var tenMillionBitArrayTypes []bitArrayType = []bitArrayType{
+	{
+		create: func() bitarray {
+			return newInt16Index(&sliceArray{})
+		},
+		name: "Int16",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(&sliceArray{}, 64)
+		},
+		name: "LRU64",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(newByteArray(bytearray.NewPaged(1024*128, 0.8, 0.3)), 64)
+		},
+		name: "LRU64BAPaged128k8030",
 	},
 }
 
@@ -273,27 +318,33 @@ var fastBitArrayTypes []bitArrayType = []bitArrayType{
 	},
 	{
 		create: func() bitarray {
-			return newBinaryLRUIndex(&sliceArray{}, 128)
+			return newBinaryLRUIndex(newInt16Index(&sliceArray{}), 64)
 		},
-		name: "LRU128",
+		name: "Int16LRU64",
 	},
 	{
 		create: func() bitarray {
-			return newBinaryLRUIndex(newPagedSliceArray(128*1024), 128)
+			return newBinaryLRUIndex(&sliceArray{}, 64)
 		},
-		name: "LRU128Paged128kb",
+		name: "LRU64",
 	},
 	{
 		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewSlice()), 128)
+			return newBinaryLRUIndex(newPagedSliceArray(128*1024), 64)
 		},
-		name: "LRU128BASlice",
+		name: "LRU64Paged128k",
 	},
 	{
 		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewPaged(4096, 0.8, 0.3)), 128)
+			return newBinaryLRUIndex(newByteArray(bytearray.NewSlice()), 64)
 		},
-		name: "LRU128BAPaged4k8030",
+		name: "LRU64BASlice",
+	},
+	{
+		create: func() bitarray {
+			return newBinaryLRUIndex(newByteArray(bytearray.NewPaged(4096, 0.8, 0.3)), 64)
+		},
+		name: "LRU64BAPaged4k8030",
 	},
 	{
 		create: func() bitarray {
@@ -306,12 +357,6 @@ var fastBitArrayTypes []bitArrayType = []bitArrayType{
 			return newBinaryLRUIndex(newPagedSliceArray(1024*1024*8), 128)
 		},
 		name: "LRU128Paged1MB",
-	},
-	{
-		create: func() bitarray {
-			return newBinaryLRUIndex(newPagedSliceArray(1024*1024*8), 512)
-		},
-		name: "LRU512Paged1MB",
 	},
 }
 

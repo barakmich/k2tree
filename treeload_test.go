@@ -1,7 +1,9 @@
 package k2tree
 
 import (
+	"fmt"
 	"math/rand"
+	"time"
 )
 
 func populateRandomTree(nLinks, maxID int, k2 *K2Tree) (maxrow int, maxcol int) {
@@ -36,16 +38,21 @@ func populateRandomTree(nLinks, maxID int, k2 *K2Tree) (maxrow int, maxcol int) 
 	return
 }
 
-func populateIncrementalTree(nLinks int, k2 *K2Tree) (maxrow int, maxcol int) {
+func populateIncrementalTree(nLinks int, k2 *K2Tree, debug bool) (maxrow int, maxcol int) {
 	//fmt.Println("Populating Tree...")
 	rowcnt := make(map[int]int)
 	colcnt := make(map[int]int)
 	var row int
 	var col int
 
+	timebefore := time.Now()
+
 	for i := 0; i < nLinks; i++ {
-		if i%10000 == 0 {
-			//		fmt.Println(i)
+		if debug && i%100000 == 0 {
+			timeafter := time.Now()
+			td := timeafter.Sub(timebefore)
+			timebefore = timeafter
+			fmt.Println(i, td)
 		}
 		rowd := rand.Intn(10)
 		cold := rand.Intn(10)
