@@ -21,7 +21,7 @@ func New() (*K2Tree, error) {
 
 func NewWithConfig(config Config) (*K2Tree, error) {
 	return newK2Tree(func() bitarray {
-		return newBinaryLRUIndex(newPagedSliceArray(1000000), 128)
+		return newBinaryLRUIndex(newPagedSliceArray(1024*128), 128)
 	}, config)
 }
 
@@ -156,6 +156,10 @@ func (k *K2Tree) printBase(highlight int) {
 	fmt.Printf("\n")
 }
 
-func (k *K2Tree) Row(row int) *Iterator {
-	return newRowIterator(k, row)
+func (k *K2Tree) From(i int) *Iterator {
+	return newRowIterator(k, i)
+}
+
+func (k *K2Tree) To(j int) *Iterator {
+	return newColumnIterator(k, j)
 }

@@ -5,7 +5,7 @@ import (
 	"math"
 	"math/bits"
 
-	"github.com/tmthrgd/go-popcount"
+	popcount "github.com/tmthrgd/go-popcount"
 )
 
 type pagedBitarray struct {
@@ -205,7 +205,7 @@ func (p *pagedBitarray) insertEight(n, at int) error {
 	return nil
 }
 
-func NewPagedBitarray(pagesize int, highwaterPercentage, lowUtilization float64) *pagedBitarray {
+func newPagedBitarray(pagesize int, highwaterPercentage, lowUtilization float64) *pagedBitarray {
 	if highwaterPercentage < lowUtilization {
 		panic("User error: highwaterPercentage is higher than lowUtilization")
 	}

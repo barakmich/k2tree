@@ -26,19 +26,19 @@ var SixteenBitsPerLayer = LayerDef{
 	shiftPerLayer: 2,
 }
 
-var SixtyFourBitsPerLayer = LayerDef{
-	bitsPerLayer:  64,
-	kPerLayer:     8,
-	maskPerLayer:  0x7,
-	shiftPerLayer: 3,
-}
+//var SixtyFourBitsPerLayer = LayerDef{
+//bitsPerLayer:  64,
+//kPerLayer:     8,
+//maskPerLayer:  0x7,
+//shiftPerLayer: 3,
+//}
 
-var TwoFiftySixBitsPerLayer = LayerDef{
-	bitsPerLayer:  256,
-	kPerLayer:     16,
-	maskPerLayer:  0xf,
-	shiftPerLayer: 4,
-}
+//var TwoFiftySixBitsPerLayer = LayerDef{
+//bitsPerLayer:  256,
+//kPerLayer:     16,
+//maskPerLayer:  0xf,
+//shiftPerLayer: 4,
+//}
 
 var DefaultConfig Config = SixteenFourConfig
 
@@ -57,7 +57,7 @@ var SixteenSixteenConfig Config = Config{
 	CellLayerDef: SixteenBitsPerLayer,
 }
 
-var SixtySixteenConfig Config = Config{
-	TreeLayerDef: SixtyFourBitsPerLayer,
-	CellLayerDef: SixteenBitsPerLayer,
-}
+//var SixtySixteenConfig Config = Config{
+//TreeLayerDef: SixtyFourBitsPerLayer,
+//CellLayerDef: SixteenBitsPerLayer,
+//}

@@ -261,7 +261,7 @@ var unindexedBitArrayTypes []bitArrayType = []bitArrayType{
 var tenMillionBitArrayTypes []bitArrayType = []bitArrayType{
 	{
 		create: func() bitarray {
-			return newBinaryLRUIndex(NewPagedBitarray(1024*128, 0.8, 0.3), 64)
+			return newBinaryLRUIndex(newPagedBitarray(1024*128, 0.8, 0.3), 64)
 		},
 		name: "LRU64Pagedbit128k8030",
 	},
