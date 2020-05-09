@@ -89,7 +89,7 @@ func BenchmarkExtract500k(b *testing.B) {
 		if err != nil {
 			b.Fatal(err)
 		}
-		maxrow, _ := populateRandomTree(500000, 25000, k2)
+		maxrow, _ := populateRandomTree(500000, 25000, k2, false)
 		b.Run(arraytype.name, func(b *testing.B) {
 			runExtractVal(b, k2, maxrow)
 		})

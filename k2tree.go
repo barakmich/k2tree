@@ -27,7 +27,7 @@ func NewWithConfig(config Config) (*K2Tree, error) {
 
 func newK2Tree(sliceFunc newBitArrayFunc, config Config) (*K2Tree, error) {
 	t := sliceFunc()
-	l := newSliceArray()
+	l := newPagedBitarray(1024*128, 0.8, 0.3)
 	return &K2Tree{
 		tbits:  t,
 		lbits:  l,

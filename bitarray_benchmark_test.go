@@ -24,7 +24,7 @@ func testPopulateRand(t testing.TB, ba newBitArrayFunc, n int, compare bool) *K2
 	if err != nil {
 		t.Fatal(err)
 	}
-	populateRandomTree(n, n*2, k2)
+	populateRandomTree(n, n*2, k2, false)
 	return k2
 }
 
@@ -136,8 +136,8 @@ func BenchmarkIncPop1M(b *testing.B) {
 	}
 }
 
-func BenchmarkIncPop50M(b *testing.B) {
-	//b.Skip("Pop50M runs some stress tests to measure scalability")
+func BenchmarkIncPop10M(b *testing.B) {
+	//b.Skip("IncPop10M runs some stress tests to measure scalability")
 	for _, bitarrayt := range tenMillionBitArrayTypes {
 		b.Run(fmt.Sprint(bitarrayt.name), func(b *testing.B) {
 			var k2 *K2Tree
@@ -150,7 +150,30 @@ func BenchmarkIncPop50M(b *testing.B) {
 				if err != nil {
 					b.Fatal(err)
 				}
-				populateIncrementalTree(50000000, k2, true)
+				populateIncrementalTree(10000000, k2, true)
+			}
+			stats := k2.Stats()
+			b.ReportMetric(stats.BitsPerLink, "bits/link")
+			b.ReportMetric(float64(stats.Bytes), "bytes")
+		})
+	}
+}
+
+func BenchmarkRandPop1M(b *testing.B) {
+	//b.Skip("RandPop1M runs some stress tests to measure scalability")
+	for _, bitarrayt := range tenMillionBitArrayTypes {
+		b.Run(fmt.Sprint(bitarrayt.name), func(b *testing.B) {
+			var k2 *K2Tree
+			for n := 0; n < b.N; n++ {
+				var err error
+				k2, err = newK2Tree(
+					bitarrayt.create,
+					SixteenSixteenConfig,
+				)
+				if err != nil {
+					b.Fatal(err)
+				}
+				populateRandomTree(1000000, 50000000, k2, true)
 			}
 			stats := k2.Stats()
 			b.ReportMetric(stats.BitsPerLink, "bits/link")
@@ -186,7 +209,7 @@ func BenchmarkRandPopVar(b *testing.B) {
 					b.Fatal(err)
 				}
 				b.ResetTimer()
-				populateRandomTree(b.N, b.N*2, k2)
+				populateRandomTree(b.N, b.N*2, k2, false)
 				stats := k2.Stats()
 				b.ReportMetric(stats.BitsPerLink, "bits/link")
 			})
@@ -203,7 +226,7 @@ func BenchmarkRandUnindexed(b *testing.B) {
 				b.Fatal(err)
 			}
 			b.ResetTimer()
-			populateRandomTree(b.N, b.N*2, k2)
+			populateRandomTree(b.N, b.N*2, k2, false)
 			stats := k2.Stats()
 			b.ReportMetric(stats.BitsPerLink, "bits/link")
 		})

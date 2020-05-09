@@ -2,10 +2,9 @@
 
 #include "textflag.h"
 
-
-TEXT ·insertFourBitsAsm(SB),NOSPLIT,$0
-	MOVQ src+0(FP), SI
-	MOVQ len+8(FP), CX
+TEXT ·insertFourBitsAsm(SB), NOSPLIT, $0
+	MOVQ    src+0(FP), SI
+	MOVQ    len+8(FP), CX
 	MOVBQZX in+16(FP), BX
 
 	SHLQ $4, BX
@@ -13,29 +12,29 @@ TEXT ·insertFourBitsAsm(SB),NOSPLIT,$0
 	MOVQ $0xF0F0F0F0F0F0F0F0, R11
 
 	CMPQ CX, $32
-	JB tail
+	JB   tail
 
-//	MOVQ SI, R8
-//	ANDQ $-32, R8
-//	ADDQ $32, R8
-//	SUBQ SI, R8
-//	JZ mainLoop
-//
-//headLoop:
-//	MOVB (SI), AX
-//	MOVB AX, DX
-//	SHRB $4, AX
-//	ORB  BX, AX
-//	MOVB AX, (SI)
-//	MOVB DX, BX
-//	SHLB $4, BX
-//	LEAQ 1(SI), SI
-//	DECQ CX
-//	DECQ R8
-//	JNZ headLoop
-//
-//	CMPQ CX, $32
-//	JB tail
+	//	MOVQ SI, R8
+	//	ANDQ $-32, R8
+	//	ADDQ $32, R8
+	//	SUBQ SI, R8
+	//	JZ mainLoop
+	//
+	// headLoop:
+	//	MOVB (SI), AX
+	//	MOVB AX, DX
+	//	SHRB $4, AX
+	//	ORB  BX, AX
+	//	MOVB AX, (SI)
+	//	MOVB DX, BX
+	//	SHLB $4, BX
+	//	LEAQ 1(SI), SI
+	//	DECQ CX
+	//	DECQ R8
+	//	JNZ headLoop
+	//
+	//	CMPQ CX, $32
+	//	JB tail
 
 mainLoop:
 	MOVQ (SI), AX
@@ -71,7 +70,7 @@ mainLoop:
 	ANDQ $-0xF1, R10
 	ANDQ $-0xF1, R13
 
-	ORQ  BX, AX
+	ORQ BX, AX
 
 	ANDQ $0xF0, DX
 	ORQ  DX, R8
@@ -91,10 +90,10 @@ mainLoop:
 	ANDQ $0xF0, BX
 	LEAQ 32(SI), SI
 	SUBQ $32, CX
-	JZ ret
+	JZ   ret
 
 	CMPQ CX, $32
-	JAE mainLoop
+	JAE  mainLoop
 
 tail:
 	MOVB (SI), AX
@@ -106,7 +105,8 @@ tail:
 	SHLB $4, BX
 	LEAQ 1(SI), SI
 	DECQ CX
-	JNZ tail
+	JNZ  tail
+
 ret:
 	MOVB BX, ret+24(FP)
 	RET

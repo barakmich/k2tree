@@ -6,14 +6,18 @@ import (
 	"time"
 )
 
-func populateRandomTree(nLinks, maxID int, k2 *K2Tree) (maxrow int, maxcol int) {
+func populateRandomTree(nLinks, maxID int, k2 *K2Tree, debug bool) (maxrow int, maxcol int) {
 	//fmt.Println("Populating Tree...")
 	rowcnt := make(map[int]int)
 	colcnt := make(map[int]int)
 
+	timebefore := time.Now()
 	for i := 0; i < nLinks; i++ {
-		if i%10000 == 0 {
-			//		fmt.Println(i)
+		if debug && i%100000 == 0 {
+			timeafter := time.Now()
+			td := timeafter.Sub(timebefore)
+			timebefore = timeafter
+			fmt.Println(i, td)
 		}
 		row := rand.Intn(maxID)
 		col := rand.Intn(maxID)

@@ -24,6 +24,7 @@ var testFuncs []testFunc = []testFunc{
 	{testEasyInsert, "TestEasyInsert"},
 	{testByteInsert, "TestByteInsert"},
 	{testNibbleInsert, "TestNibbleInsert"},
+	{testNibbleInsert, "TestNibbleInsertAtZero"},
 	{testDebug, "TestDebug"},
 }
 
@@ -146,7 +147,10 @@ func TestBitarrayTypes(t *testing.T) {
 
 func testSmoke(t *testing.T) {
 	s := curFunc()
-	s.Insert(24, 0)
+	err := s.Insert(24, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
 	s.Set(3, true)
 	if s.Count(0, 2) != 0 {
 		t.Error("wrong count")
@@ -176,9 +180,9 @@ func testSmoke(t *testing.T) {
 
 func testEasyInsert(t *testing.T) {
 	s := curFunc()
-	s.Insert(24, 0)
+	err := s.Insert(24, 0)
 	s.Set(3, true)
-	s.Insert(8, 0)
+	err = s.Insert(8, 0)
 	if s.Get(3) {
 		t.Error("new 3 should not be set")
 	}
@@ -192,11 +196,11 @@ func testEasyInsert(t *testing.T) {
 
 func testByteInsert(t *testing.T) {
 	s := curFunc()
-	s.Insert(24, 0)
+	err := s.Insert(24, 0)
 	s.Set(11, true)
 	s.Set(6, true)
 	s.Set(2, true)
-	s.Insert(8, 4)
+	err = s.Insert(8, 4)
 	if s.Get(11) {
 		t.Error("new 11 should not be set")
 	}

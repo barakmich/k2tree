@@ -27,10 +27,7 @@ func newColumnIterator(tree *K2Tree, col int) *Iterator {
 
 func (it *Iterator) Next() bool {
 	it.offset = it.getNext(it.offset)
-	if it.offset != -1 {
-		return true
-	}
-	return false
+	return it.offset != -1
 }
 
 func (it *Iterator) Value() int {

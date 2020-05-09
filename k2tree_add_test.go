@@ -82,11 +82,11 @@ func TestRandAddTestCase(t *testing.T) {
 	k2.Add(2081, 41318)
 	k2.Add(4425, 22540)
 	k2.Add(40456, 3300)
-	tmp := k2.Row(2081).ExtractAll()
+	tmp := k2.From(2081).ExtractAll()
 	if len(tmp) != 1 && tmp[0] != 41318 {
 		t.Errorf("Unmatched 2081")
 	}
-	tmp = k2.Row(40456).ExtractAll()
+	tmp = k2.From(40456).ExtractAll()
 	if len(tmp) != 1 && tmp[0] != 3300 {
 		t.Errorf("Unmatched 40456")
 	}
