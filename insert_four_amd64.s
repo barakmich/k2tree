@@ -90,7 +90,7 @@ mainLoop:
 	ANDQ $0xF0, BX
 	LEAQ 32(SI), SI
 	SUBQ $32, CX
-	JZ   ret
+	JZ   return
 
 	CMPQ CX, $32
 	JAE  mainLoop
