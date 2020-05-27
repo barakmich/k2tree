@@ -107,6 +107,6 @@ tail:
 	DECQ CX
 	JNZ  tail
 
-ret:
+return:
 	MOVB BX, ret+24(FP)
 	RET
