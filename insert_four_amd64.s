@@ -7,7 +7,6 @@ TEXT ·insertFourBitsAsm(SB), NOSPLIT, $0
 	MOVQ    len+8(FP), CX
 	MOVBQZX in+16(FP), BX
 
-	SHLQ $4, BX
 	ANDQ $0xF0, BX
 	MOVQ $0xF0F0F0F0F0F0F0F0, R11
 

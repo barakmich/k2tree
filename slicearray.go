@@ -143,7 +143,7 @@ func (s *sliceArray) insertFour(at int) error {
 	off := at >> 3
 	var inbyte byte
 	if at%8 != 0 {
-		inbyte = s.bytes[off]
+		inbyte = s.bytes[off] << 4
 		s.bytes[off] &= 0xF0
 		off++
 	}
