@@ -94,33 +94,15 @@ var testBitArrayTypes []bitArrayType = []bitArrayType{
 	},
 	{
 		create: func() bitarray {
-			return newByteArray(bytearray.NewInt16Index(bytearray.NewPaged(128*1024, 0.8, 0.3)))
+			return newBinaryLRUIndex(newPagedBitarray(1024*128, 0.8, 0.3), 64)
 		},
-		name: "BAInt16Paged128k8030",
+		name: "LRU64Pagedbit128k8030",
 	},
 	{
 		create: func() bitarray {
 			return newBinaryLRUIndex(&sliceArray{}, 128)
 		},
 		name: "LRU128",
-	},
-	{
-		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewSlice()), 128)
-		},
-		name: "LRU128BA",
-	},
-	{
-		create: func() bitarray {
-			return newBinaryLRUIndex(newPagedSliceArray(50000), 128)
-		},
-		name: "LRU128Paged50k",
-	},
-	{
-		create: func() bitarray {
-			return newBinaryLRUIndex(newPagedSliceArray(100000), 128)
-		},
-		name: "LRU128Paged100k",
 	},
 	{
 		create: func() bitarray {
@@ -180,9 +162,9 @@ func testSmoke(t *testing.T) {
 
 func testEasyInsert(t *testing.T) {
 	s := curFunc()
-	err := s.Insert(24, 0)
+	s.Insert(24, 0)
 	s.Set(3, true)
-	err = s.Insert(8, 0)
+	s.Insert(8, 0)
 	if s.Get(3) {
 		t.Error("new 3 should not be set")
 	}
@@ -196,11 +178,11 @@ func testEasyInsert(t *testing.T) {
 
 func testByteInsert(t *testing.T) {
 	s := curFunc()
-	err := s.Insert(24, 0)
+	s.Insert(24, 0)
 	s.Set(11, true)
 	s.Set(6, true)
 	s.Set(2, true)
-	err = s.Insert(8, 4)
+	s.Insert(8, 4)
 	if s.Get(11) {
 		t.Error("new 11 should not be set")
 	}

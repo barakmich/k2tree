@@ -55,7 +55,7 @@ func TestInsertFourBits(t *testing.T) {
 	}
 }
 
-const FUZZ_ITER = 3000
+const FUZZ_ITER = 1000
 
 func TestInsertFourFuzz(t *testing.T) {
 	for i := 0; i < FUZZ_ITER; i++ {
@@ -88,7 +88,28 @@ func generateByteString(size int) []byte {
 	return out
 }
 
-func TestInsertFourMonadic(t *testing.T) {
+func TestInsertFourChainableFuzz(t *testing.T) {
 	// Checks if calling insertFourBits followed by insertFourBits and passing
 	// along the extra byte is equivalent.
+	for i := 0; i < FUZZ_ITER; i++ {
+		inbyte := byte(rand.Intn(256))
+		n := 16 + rand.Intn(8)
+		orig := generateByteString((n * 2) + 1)
+		bytestr := make([]byte, len(orig))
+		realbyte := make([]byte, len(orig))
+		copy(realbyte, orig)
+		copy(bytestr, orig)
+		out_a := insertFourBits(bytestr[1:n+1], inbyte)
+		out_b := insertFourBits(bytestr[n+1:], out_a)
+		outreal := insertFourBitsGo(realbyte[1:], inbyte)
+		if !bytes.Equal(bytestr, realbyte) {
+			t.Logf("Mismatched test case:\n{\nin: %#v,\ninByte: %#v,\ngot: %#v,\ngotOut: %#v,\nexpected: %#v,\nexpectedOut: %#v,\n},\n",
+				orig, inbyte, bytestr, out_b, realbyte, outreal)
+			t.Fail()
+		} else if out_b != outreal {
+			t.Logf("Mismatched test case:\n{\nin: %#v,\ninByte: %#v,\ngot: %#v,\ngotOut: %#v,\nexpected: %#v,\nexpectedOut: %#v,\n},\n",
+				orig, inbyte, bytestr, out_b, realbyte, outreal)
+			t.Fail()
+		}
+	}
 }
