@@ -9,15 +9,16 @@ import (
 )
 
 type pagedBitarray struct {
-	pages       [][]byte
-	levelLength []int
-	levelCum    []int
-	bytelength  int
-	bitlength   int
-	pagesize    int
-	high        int
-	low         int
-	bittotal    int
+	pages         [][]byte
+	firstLevelLen int
+	levelLength   []int
+	levelCum      []int
+	bytelength    int
+	bitlength     int
+	pagesize      int
+	high          int
+	low           int
+	bittotal      int
 }
 
 var _ bitarray = (*pagedBitarray)(nil)
@@ -67,7 +68,7 @@ func (p *pagedBitarray) Count(from, to int) int {
 	if from == to {
 		return 0
 	}
-	c := 0
+	var c uint64
 	start := from >> 3
 	startbit := byte(from & 0x07)
 	end := to >> 3
@@ -83,14 +84,14 @@ func (p *pagedBitarray) Count(from, to int) int {
 
 	delta := end - start
 	if startbit != 0 {
-		c += bits.OnesCount8(p.pages[startl][startoff] & (0xFF >> startbit))
+		c += uint64(bits.OnesCount8(p.pages[startl][startoff] & (0xFF >> startbit)))
 		startoff++
 		delta--
 		if startoff == p.levelLength[startl] {
 			startl += 1
 			startoff = 0
 			if startl == len(p.pages) {
-				return c
+				return int(c)
 			}
 		}
 	}
@@ -103,20 +104,20 @@ func (p *pagedBitarray) Count(from, to int) int {
 	}
 
 	if endbit != 0 {
-		c += bits.OnesCount8(p.pages[endl][endoff] & (0xFF &^ (0xFF >> endbit)))
+		c += uint64(bits.OnesCount8(p.pages[endl][endoff] & (0xFF &^ (0xFF >> endbit))))
 	}
 
 	if startl == endl {
-		c += int(popcount.CountBytes(p.pages[startl][startoff:endoff]))
-		return c
+		c += popcount.CountBytes(p.pages[startl][startoff:endoff])
+		return int(c)
 	}
 
-	c += int(popcount.CountBytes(p.pages[startl][startoff:p.levelLength[startl]]))
-	c += int(popcount.CountBytes(p.pages[endl][:endoff]))
+	c += popcount.CountBytes(p.pages[startl][startoff:p.levelLength[startl]])
+	c += popcount.CountBytes(p.pages[endl][:endoff])
 	for l := startl + 1; l < endl; l++ {
-		c += int(popcount.CountBytes(p.pages[l][:p.levelLength[l]]))
+		c += popcount.CountBytes(p.pages[l][:p.levelLength[l]])
 	}
-	return c
+	return int(c)
 }
 
 func (p *pagedBitarray) Get(at int) bool {
@@ -166,18 +167,23 @@ func (p *pagedBitarray) insertFour(at int) error {
 	}
 	off := at >> 3
 	var inbyte byte
+
+	level, byteoff := p.findOffset(off)
 	if at%8 != 0 {
-		level, byteoff := p.findOffset(off)
 		inbyte = p.pages[level][byteoff]
 		p.pages[level][byteoff] = inbyte & 0xF0
-		off++
+		byteoff++
+		if byteoff == len(p.pages[level]) {
+			level += 1
+			byteoff = 0
+		}
 	}
+
 	inbyte = inbyte << 4
-	for i := off; i < p.bytelength; i++ {
-		level, byteoff := p.findOffset(i)
-		t := p.pages[level][byteoff]
-		p.pages[level][byteoff] = t>>4 | inbyte
-		inbyte = t << 4
+
+	for l := level; l < len(p.pages); l++ {
+		inbyte = insertFourBits(p.pages[l][byteoff:p.levelLength[l]], inbyte)
+		byteoff = 0
 	}
 	if inbyte != 0x00 {
 		panic("Overshot")
@@ -261,7 +267,7 @@ func (p *pagedBitarray) findOffset(idx int) (level int, offset int) {
 	if idx == p.bytelength {
 		return p.levels() - 1, p.levelLength[len(p.pages)-1]
 	}
-	if idx < p.levelLength[0] {
+	if idx < p.firstLevelLen {
 		return 0, idx
 	}
 	tree := p.levelCum
@@ -307,6 +313,9 @@ func (p *pagedBitarray) insertIntoLevel(level int, idx int, b []byte) {
 	copy(p.pages[level][idx:], b)
 	p.bytelength += amt
 	p.levelLength[level] += amt
+	if level == 0 {
+		p.firstLevelLen += amt
+	}
 	p.updateTree(level, len(b))
 }
 
@@ -331,6 +340,9 @@ func (p *pagedBitarray) rebalance() {
 			p.levelLength[l+1] += toMove
 			p.updateTree(l+1, toMove)
 			p.levelLength[l] -= toMove
+			if l == 0 {
+				p.firstLevelLen -= toMove
+			}
 			p.updateTree(l, -toMove)
 		}
 	}

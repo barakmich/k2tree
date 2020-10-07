@@ -122,7 +122,7 @@ func BenchmarkIncPop1M(b *testing.B) {
 				var err error
 				k2, err = newK2Tree(
 					bitarrayt.create,
-					SixteenSixteenConfig,
+					SixteenFourConfig,
 				)
 				if err != nil {
 					b.Fatal(err)
@@ -145,7 +145,7 @@ func BenchmarkIncPop10M(b *testing.B) {
 				var err error
 				k2, err = newK2Tree(
 					bitarrayt.create,
-					SixteenSixteenConfig,
+					SixteenFourConfig,
 				)
 				if err != nil {
 					b.Fatal(err)
@@ -323,12 +323,6 @@ var fastBitArrayTypes []bitArrayType = []bitArrayType{
 	},
 	{
 		create: func() bitarray {
-			return newInt16Index(newByteArray(bytearray.NewPaged(4096, 0.8, 0.3)))
-		},
-		name: "Int16BAPaged4k8030",
-	},
-	{
-		create: func() bitarray {
 			return newBinaryLRUIndex(newInt16Index(&sliceArray{}), 64)
 		},
 		name: "Int16LRU64",
@@ -347,27 +341,9 @@ var fastBitArrayTypes []bitArrayType = []bitArrayType{
 	},
 	{
 		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewSlice()), 64)
+			return newBinaryLRUIndex(newPagedBitarray(1024*128, 0.8, 0.3), 64)
 		},
-		name: "LRU64BASlice",
-	},
-	{
-		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewPaged(4096, 0.8, 0.3)), 64)
-		},
-		name: "LRU64BAPaged4k8030",
-	},
-	{
-		create: func() bitarray {
-			return newBinaryLRUIndex(newByteArray(bytearray.NewPaged(1024*1024, 0.8, 0.3)), 128)
-		},
-		name: "LRU128BAPaged1M8030",
-	},
-	{
-		create: func() bitarray {
-			return newBinaryLRUIndex(newPagedSliceArray(1024*1024*8), 128)
-		},
-		name: "LRU128Paged1MB",
+		name: "LRU64Pagedbit128k8030",
 	},
 }
 
