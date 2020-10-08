@@ -12,7 +12,7 @@ type pagedBitarray struct {
 	pages         [][]byte
 	firstLevelLen int
 	levelLength   []int
-	levelCum      []int
+	levelTree     []int
 	bytelength    int
 	bitlength     int
 	pagesize      int
@@ -225,16 +225,21 @@ func newPagedBitarray(pagesize int, highwaterPercentage, lowUtilization float64)
 		bytelength:  0,
 		bitlength:   0,
 		levelLength: []int{0},
-		levelCum:    []int{0},
-		pagesize:    pagesize,
-		high:        hw,
-		low:         low,
-		bittotal:    0,
+		// Linear tree in [root, left, right] order, recursively.
+		// So, a perfect binary tree of {1-7} with 4 on the top would be
+		// 4, 2, 6, 1, 3, 5, 7
+		// Keeps the counts to how many set bytes are used before that level
+		// in the array.
+		levelTree: []int{0},
+		pagesize:  pagesize,
+		high:      hw,
+		low:       low,
+		bittotal:  0,
 	}
 }
 
 func (p *pagedBitarray) updateTree(level, delta int) {
-	var req int
+	var req int // Bits required to represent all the levels
 	if p.levels() == 1 {
 		req = 1
 	} else {
@@ -244,7 +249,7 @@ func (p *pagedBitarray) updateTree(level, delta int) {
 	for req > 0 {
 		isEmpty := (level & (0x1 << (req - 1))) == 0
 		if isEmpty {
-			p.levelCum[treeidx] += delta
+			p.levelTree[treeidx] += delta
 			treeidx = (treeidx << 1) + 1
 		} else {
 			treeidx = (treeidx << 1) + 2
@@ -270,7 +275,7 @@ func (p *pagedBitarray) findOffset(idx int) (level int, offset int) {
 	if idx < p.firstLevelLen {
 		return 0, idx
 	}
-	tree := p.levelCum
+	tree := p.levelTree
 	t := 0
 	level = 0
 	max := len(tree)
@@ -353,18 +358,18 @@ func (p *pagedBitarray) createNewLevel() {
 	if newLevel != 1 {
 		h := bits.Len64(uint64(newLevel))
 		if h > bits.Len64(uint64(newLevel-1)) {
-			newCum := make([]int, (len(p.levelCum)*2)+1)
+			newCum := make([]int, (len(p.levelTree)*2)+1)
 			i := 1
 			off := 1
-			for len(p.levelCum) > 0 {
-				copy(newCum[off:], p.levelCum[0:i])
-				p.levelCum = p.levelCum[i:]
+			for len(p.levelTree) > 0 {
+				copy(newCum[off:], p.levelTree[0:i])
+				p.levelTree = p.levelTree[i:]
 				i = i << 1
 				off += i
 			}
-			copy(newCum[1:], p.levelCum)
-			p.levelCum = newCum
-			p.levelCum[0] = p.bytelength
+			copy(newCum[1:], p.levelTree)
+			p.levelTree = newCum
+			p.levelTree[0] = p.bytelength
 		}
 	}
 	p.pages = append(p.pages, make([]byte, p.pagesize))
