@@ -55,10 +55,10 @@ func TestInsertFourBits(t *testing.T) {
 	}
 }
 
-const FUZZ_ITER = 1000
+const FuzzIterations = 1000
 
 func TestInsertFourFuzz(t *testing.T) {
-	for i := 0; i < FUZZ_ITER; i++ {
+	for i := 0; i < FuzzIterations; i++ {
 		inbyte := byte(rand.Intn(256))
 		orig := generateByteString((rand.Intn(256) * rand.Intn(256)) + 1)
 		bytestr := make([]byte, len(orig))
@@ -91,7 +91,7 @@ func generateByteString(size int) []byte {
 func TestInsertFourChainableFuzz(t *testing.T) {
 	// Checks if calling insertFourBits followed by insertFourBits and passing
 	// along the extra byte is equivalent.
-	for i := 0; i < FUZZ_ITER; i++ {
+	for i := 0; i < FuzzIterations; i++ {
 		inbyte := byte(rand.Intn(256))
 		n := 16 + rand.Intn(8)
 		orig := generateByteString((n * 2) + 1)
