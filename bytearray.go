@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/bits"
 
-	"git.barakmich.com/barak/k2tree/bytearray"
+	"github.com/barakmich/k2tree/bytearray"
 )
 
 type byteArray struct {

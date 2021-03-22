@@ -1,4 +1,4 @@
-module git.barakmich.com/barak/k2tree
+module github.com/barakmich/k2tree
 
 go 1.13
 

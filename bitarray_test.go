@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"git.barakmich.com/barak/k2tree/bytearray"
+	"github.com/barakmich/k2tree/bytearray"
 )
 
 var curFunc newBitArrayFunc
