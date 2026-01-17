@@ -241,15 +241,11 @@ impl SliceArray {
         if at % 8 == 0 {
             // Copy from off..old_len to off+n_bytes
             self.bytes.copy_within(off..old_len, off + n_bytes);
-            for x in 0..n_bytes {
-                self.bytes[off + x] = 0x00;
-            }
+            self.bytes[off..off + n_bytes].fill(0x00);
         } else {
             // Copy from off+1..old_len to off+1+n_bytes
             self.bytes.copy_within(off + 1..old_len, off + 1 + n_bytes);
-            for x in 0..n_bytes {
-                self.bytes[off + 1 + x] = 0x00;
-            }
+            self.bytes[off + 1..off + 1 + n_bytes].fill(0x00);
             self.bytes[off + n_bytes] = self.bytes[off] & 0x0F;
             self.bytes[off] &= 0xF0;
         }

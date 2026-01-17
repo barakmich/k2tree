@@ -1,8 +1,6 @@
-mod bitvec_array;
 mod insert_four;
 mod slice_array;
 
-pub use bitvec_array::BitVecArray;
 pub use insert_four::insert_four_bits;
 pub use slice_array::SliceArray;
 

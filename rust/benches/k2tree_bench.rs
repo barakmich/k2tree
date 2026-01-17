@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use k2tree::{BitArray, BitVecArray, K2Tree, SliceArray, SIXTEEN_FOUR_CONFIG, SIXTEEN_SIXTEEN_CONFIG};
+use k2tree::{BitArray, K2Tree, SliceArray, SIXTEEN_FOUR_CONFIG, SIXTEEN_SIXTEEN_CONFIG};
 use rand::Rng;
 
 fn simple_load<T: BitArray>(k: &mut K2Tree<T>) {
@@ -115,79 +115,6 @@ fn bench_inc_pop_10k_slice(c: &mut Criterion) {
     });
 }
 
-// BitVecArray benchmarks
-
-fn bench_extract_20_bitvec(c: &mut Criterion) {
-    let mut k2 = K2Tree::new(BitVecArray::new(), BitVecArray::new());
-    simple_load(&mut k2);
-
-    c.bench_function("extract_20_bitvec", |b| {
-        b.iter(|| {
-            let mut it = k2.from(black_box(20));
-            let out = it.extract_all();
-            black_box(out);
-        });
-    });
-}
-
-fn bench_rand_pop_1k_bitvec(c: &mut Criterion) {
-    c.bench_function("rand_pop_1k_bitvec", |b| {
-        b.iter(|| {
-            let mut k2 = K2Tree::new_with_config(
-                BitVecArray::new(),
-                BitVecArray::new(),
-                SIXTEEN_SIXTEEN_CONFIG,
-            );
-            populate_random_tree(black_box(1000), black_box(2000), &mut k2);
-            black_box(k2.stats());
-        });
-    });
-}
-
-fn bench_inc_pop_1k_bitvec(c: &mut Criterion) {
-    c.bench_function("inc_pop_1k_bitvec", |b| {
-        b.iter(|| {
-            let mut k2 = K2Tree::new_with_config(
-                BitVecArray::new(),
-                BitVecArray::new(),
-                SIXTEEN_FOUR_CONFIG,
-            );
-            populate_incremental_tree(black_box(1000), &mut k2);
-            black_box(k2.stats());
-        });
-    });
-}
-
-fn bench_rand_pop_10k_bitvec(c: &mut Criterion) {
-    c.bench_function("rand_pop_10k_bitvec", |b| {
-        b.iter(|| {
-            let mut k2 = K2Tree::new_with_config(
-                BitVecArray::new(),
-                BitVecArray::new(),
-                SIXTEEN_SIXTEEN_CONFIG,
-            );
-            populate_random_tree(black_box(10000), black_box(20000), &mut k2);
-            let stats = k2.stats();
-            black_box(stats);
-        });
-    });
-}
-
-fn bench_inc_pop_10k_bitvec(c: &mut Criterion) {
-    c.bench_function("inc_pop_10k_bitvec", |b| {
-        b.iter(|| {
-            let mut k2 = K2Tree::new_with_config(
-                BitVecArray::new(),
-                BitVecArray::new(),
-                SIXTEEN_FOUR_CONFIG,
-            );
-            populate_incremental_tree(black_box(10000), &mut k2);
-            let stats = k2.stats();
-            black_box(stats);
-        });
-    });
-}
-
 criterion_group!(
     benches,
     bench_extract_20_slice,
@@ -195,10 +122,5 @@ criterion_group!(
     bench_inc_pop_1k_slice,
     bench_rand_pop_10k_slice,
     bench_inc_pop_10k_slice,
-    bench_extract_20_bitvec,
-    bench_rand_pop_1k_bitvec,
-    bench_inc_pop_1k_bitvec,
-    bench_rand_pop_10k_bitvec,
-    bench_inc_pop_10k_bitvec,
 );
 criterion_main!(benches);
