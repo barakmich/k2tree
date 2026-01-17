@@ -1,0 +1,23 @@
+[package]
+name = "k2tree"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bitvec = "1.0"
+
+[dev-dependencies]
+criterion = "0.5"
+rand = "0.8"
+
+[[bench]]
+name = "k2tree_bench"
+harness = false
+
+[[bench]]
+name = "count_bench"
+harness = false
+
+[[bench]]
+name = "get_bench"
+harness = false
