@@ -1,7 +1,11 @@
 mod insert_four;
+mod lru_array;
+mod quartile_index;
 mod slice_array;
 
 pub use insert_four::insert_four_bits;
+pub use lru_array::LruArray;
+pub use quartile_index::QuartileIndex;
 pub use slice_array::SliceArray;
 
 use crate::error::K2TreeError;

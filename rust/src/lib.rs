@@ -32,7 +32,7 @@ mod k2tree;
 mod tests;
 
 // Public API exports
-pub use bitarray::{BitArray, SliceArray};
+pub use bitarray::{BitArray, LruArray, QuartileIndex, SliceArray};
 pub use error::K2TreeError;
 pub use k2tree::{
     Config, K2Tree, K2TreeIterator, LayerDef, Stats, DEFAULT_CONFIG, FOUR_BITS_PER_LAYER,

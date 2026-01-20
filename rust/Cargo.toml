@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+lru = "0.12"
 
 [dev-dependencies]
 criterion = "0.5"
@@ -19,4 +20,8 @@ harness = false
 
 [[bench]]
 name = "get_bench"
+harness = false
+
+[[bench]]
+name = "lru_bench"
 harness = false
