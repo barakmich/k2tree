@@ -20,8 +20,8 @@ func newQuartileIndex(bits bitarray) *quartileIndex {
 		},
 	}
 	q.counts[0] = bits.Count(0, q.offsets[0])
-	q.counts[1] = bits.Count(q.offsets[0], q.offsets[1]) + q.counts[1]
-	q.counts[2] = bits.Count(q.offsets[0], q.offsets[2]) + q.counts[2]
+	q.counts[1] = bits.Count(0, q.offsets[1])
+	q.counts[2] = bits.Count(0, q.offsets[2])
 	return q
 }
 
