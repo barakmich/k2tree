@@ -1,9 +1,33 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use k2tree::{
-    BitArray, K2Tree, LruArray, SliceArray, FOUR_FOUR_CONFIG, SIXTEEN_FOUR_CONFIG,
+    BitArray, K2Tree, LruArray, QuartileIndex, SliceArray, FOUR_FOUR_CONFIG, SIXTEEN_FOUR_CONFIG,
     SIXTEEN_SIXTEEN_CONFIG,
 };
 use rand::Rng;
+
+// xorshift32 PRNG — identical algorithm to the Go version so both benchmarks
+// use the same pseudo-random sequence from the same seed.
+fn xorshift32(state: &mut u32) -> u32 {
+    *state ^= *state << 13;
+    *state ^= *state >> 17;
+    *state ^= *state << 5;
+    *state
+}
+
+fn xorshift32_n(state: &mut u32, n: u32) -> u32 {
+    xorshift32(state) % n
+}
+
+// populate_50k_seeded fills k2 with 50 000 random links from a fixed seed,
+// producing the same tree every time and matching the Go benchmark exactly.
+fn populate_50k_seeded<T: BitArray>(k2: &mut K2Tree<T>) {
+    let mut state: u32 = 12345;
+    for _ in 0..50_000 {
+        let row = xorshift32_n(&mut state, 100_000) as usize;
+        let col = xorshift32_n(&mut state, 100_000) as usize;
+        k2.add(row, col).unwrap();
+    }
+}
 
 fn simple_load<T: BitArray>(k: &mut K2Tree<T>) {
     k.add(20, 41).unwrap();
@@ -237,6 +261,140 @@ fn bench_rand_pop_1k_16x4(c: &mut Criterion) {
     });
 }
 
+// QuartileIndex benchmarks
+
+fn bench_inc_pop_1k_quartile(c: &mut Criterion) {
+    c.bench_function("inc_pop_1k_quartile", |b| {
+        b.iter(|| {
+            let mut k2 = K2Tree::new_with_config(
+                QuartileIndex::new(SliceArray::new()),
+                QuartileIndex::new(SliceArray::new()),
+                SIXTEEN_FOUR_CONFIG,
+            );
+            populate_incremental_tree(black_box(1000), &mut k2);
+            black_box(k2.stats());
+        });
+    });
+}
+
+fn bench_inc_pop_10k_quartile(c: &mut Criterion) {
+    c.bench_function("inc_pop_10k_quartile", |b| {
+        b.iter(|| {
+            let mut k2 = K2Tree::new_with_config(
+                QuartileIndex::new(SliceArray::new()),
+                QuartileIndex::new(SliceArray::new()),
+                SIXTEEN_FOUR_CONFIG,
+            );
+            populate_incremental_tree(black_box(10000), &mut k2);
+            black_box(k2.stats());
+        });
+    });
+}
+
+fn bench_rand_pop_1k_quartile(c: &mut Criterion) {
+    c.bench_function("rand_pop_1k_quartile", |b| {
+        b.iter(|| {
+            let mut k2 = K2Tree::new_with_config(
+                QuartileIndex::new(SliceArray::new()),
+                QuartileIndex::new(SliceArray::new()),
+                SIXTEEN_SIXTEEN_CONFIG,
+            );
+            populate_random_tree(black_box(1000), black_box(2000), &mut k2);
+            black_box(k2.stats());
+        });
+    });
+}
+
+fn bench_rand_pop_10k_quartile(c: &mut Criterion) {
+    c.bench_function("rand_pop_10k_quartile", |b| {
+        b.iter(|| {
+            let mut k2 = K2Tree::new_with_config(
+                QuartileIndex::new(SliceArray::new()),
+                QuartileIndex::new(SliceArray::new()),
+                SIXTEEN_SIXTEEN_CONFIG,
+            );
+            populate_random_tree(black_box(10000), black_box(20000), &mut k2);
+            black_box(k2.stats());
+        });
+    });
+}
+
+fn bench_rand_pop_50k_quartile(c: &mut Criterion) {
+    c.bench_function("rand_pop_50k_quartile", |b| {
+        b.iter(|| {
+            let mut k2 = K2Tree::new_with_config(
+                QuartileIndex::new(SliceArray::new()),
+                QuartileIndex::new(SliceArray::new()),
+                SIXTEEN_SIXTEEN_CONFIG,
+            );
+            populate_random_tree(black_box(50000), black_box(100000), &mut k2);
+            black_box(k2.stats());
+        });
+    });
+}
+
+// Iteration benchmarks: populate once with a fixed seed, then measure how
+// fast we can walk every row's forward links across the full node space.
+// (Reverse / column iteration is not yet implemented in either language.)
+
+fn bench_iterate_all_50k_slice(c: &mut Criterion) {
+    let mut k2 = K2Tree::new_with_config(
+        SliceArray::new(),
+        SliceArray::new(),
+        SIXTEEN_SIXTEEN_CONFIG,
+    );
+    populate_50k_seeded(&mut k2);
+
+    c.bench_function("iterate_all_50k_slice", |b| {
+        b.iter(|| {
+            let mut sum = 0usize;
+            for row in 0..100_000 {
+                let mut it = k2.from(black_box(row));
+                while it.next_edge() {
+                    sum += 1;
+                }
+            }
+            black_box(sum);
+        });
+    });
+}
+
+fn bench_iterate_all_50k_quartile(c: &mut Criterion) {
+    let mut k2 = K2Tree::new_with_config(
+        QuartileIndex::new(SliceArray::new()),
+        QuartileIndex::new(SliceArray::new()),
+        SIXTEEN_SIXTEEN_CONFIG,
+    );
+    populate_50k_seeded(&mut k2);
+
+    c.bench_function("iterate_all_50k_quartile", |b| {
+        b.iter(|| {
+            let mut sum = 0usize;
+            for row in 0..100_000 {
+                let mut it = k2.from(black_box(row));
+                while it.next_edge() {
+                    sum += 1;
+                }
+            }
+            black_box(sum);
+        });
+    });
+}
+
+fn bench_inc_pop_50k_quartile(c: &mut Criterion) {
+    c.bench_function("inc_pop_50k_quartile", |b| {
+        b.iter(|| {
+            let mut k2 = K2Tree::new_with_config(
+                QuartileIndex::new(SliceArray::new()),
+                QuartileIndex::new(SliceArray::new()),
+                SIXTEEN_FOUR_CONFIG,
+            );
+            populate_incremental_tree(black_box(50000), &mut k2);
+            black_box(k2.stats());
+        });
+    });
+}
+
 criterion_group!(
     benches,
     // Original SliceArray benchmarks
@@ -255,5 +413,17 @@ criterion_group!(
     bench_inc_pop_1k_16x16,
     bench_rand_pop_1k_4x4,
     bench_rand_pop_1k_16x4,
+    // QuartileIndex benchmarks
+    bench_inc_pop_1k_quartile,
+    bench_inc_pop_10k_quartile,
+    bench_rand_pop_1k_quartile,
+    bench_rand_pop_10k_quartile,
+    bench_rand_pop_50k_quartile,
+    bench_inc_pop_50k_quartile,
 );
-criterion_main!(benches);
+criterion_group! {
+    name = iter_benches;
+    config = Criterion::default().sample_size(10);
+    targets = bench_iterate_all_50k_slice, bench_iterate_all_50k_quartile
+}
+criterion_main!(benches, iter_benches);

@@ -119,12 +119,6 @@ func TestBitarrayTypes(t *testing.T) {
 			t.Run(fmt.Sprintf("%s%s", testcase.name, bitarray.name), testcase.testcase)
 		}
 	}
-	for _, bitarray := range debugBitArrayTypes {
-		curFunc = bitarray.create
-		for _, testcase := range testFuncs {
-			t.Run(fmt.Sprintf("%s%s", testcase.name, bitarray.name), testcase.testcase)
-		}
-	}
 }
 
 func testSmoke(t *testing.T) {

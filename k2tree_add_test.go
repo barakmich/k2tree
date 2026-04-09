@@ -1,7 +1,6 @@
 package k2tree
 
 import (
-	"fmt"
 	"testing"
 	"time"
 )
@@ -56,11 +55,11 @@ func TestSixteenBPL(t *testing.T) {
 		kk.Add(base+x, base+x)
 		if x%100000 == 0 {
 			newt := time.Now()
-			fmt.Println(x, newt.Sub(td))
+			t.Logf("%d %v", x, newt.Sub(td))
 			td = newt
 		}
 	}
-	fmt.Println(kk.Stats())
+	t.Log(kk.Stats())
 }
 
 func TestRandAddTestCase(t *testing.T) {
