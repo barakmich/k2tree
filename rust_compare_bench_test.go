@@ -107,9 +107,7 @@ func BenchmarkIncPop50kQuartile(b *testing.B) {
 	}
 }
 
-// Iteration benchmarks: populate once with a fixed seed, then measure how
-// fast we can walk every row's forward links across the full node space.
-// (Reverse / column iteration is not yet implemented in either language.)
+// Seeded iteration benchmarks for cross-language comparison with Rust.
 
 func BenchmarkIterateAll50kSlice(b *testing.B) {
 	k2, _ := newK2Tree(func() bitarray { return &sliceArray{} }, SixteenSixteenConfig)

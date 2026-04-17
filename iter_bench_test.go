@@ -1,6 +1,8 @@
 package k2tree
 
-import "testing"
+import (
+	"testing"
+)
 
 func BenchmarkIterateAll1kSlice(b *testing.B) {
 	k2, _ := newK2Tree(func() bitarray { return &sliceArray{} }, SixteenSixteenConfig)
