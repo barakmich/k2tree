@@ -1,26 +1,107 @@
 use crate::bitarray::{insert_four_bits, BitArray};
 use crate::error::K2TreeError;
 
-/// Fast popcount using u64 chunks for better performance.
-/// Processes 8 bytes at a time, which typically compiles to a single POPCNT instruction.
-#[inline]
-fn count_ones_fast(bytes: &[u8]) -> usize {
-    let mut count = 0;
+#[cfg(target_arch = "aarch64")]
+#[target_feature(enable = "neon")]
+unsafe fn count_ones_neon(bytes: &[u8]) -> usize {
+    use std::arch::aarch64::*;
+    let mut sum = 0u64;
+    let mut ptr = bytes.as_ptr();
+    let mut remaining = bytes.len();
 
-    // Process 8-byte chunks as u64
-    let chunks = bytes.chunks_exact(8);
-    let remainder = chunks.remainder();
-
-    for chunk in chunks {
-        let value = u64::from_ne_bytes(chunk.try_into().unwrap());
-        count += value.count_ones() as usize;
+    // 128 bytes/iter: 8 VCNT vectors summed byte-wise (max 64/lane, fits u8),
+    // then pairwise-widened to u16 and horizontally summed.
+    while remaining >= 128 {
+        let v0 = vcntq_u8(vld1q_u8(ptr));
+        let v1 = vcntq_u8(vld1q_u8(ptr.add(16)));
+        let v2 = vcntq_u8(vld1q_u8(ptr.add(32)));
+        let v3 = vcntq_u8(vld1q_u8(ptr.add(48)));
+        let v4 = vcntq_u8(vld1q_u8(ptr.add(64)));
+        let v5 = vcntq_u8(vld1q_u8(ptr.add(80)));
+        let v6 = vcntq_u8(vld1q_u8(ptr.add(96)));
+        let v7 = vcntq_u8(vld1q_u8(ptr.add(112)));
+        let ab = vaddq_u8(vaddq_u8(v0, v1), vaddq_u8(v2, v3));
+        let cd = vaddq_u8(vaddq_u8(v4, v5), vaddq_u8(v6, v7));
+        sum += vaddvq_u16(vpaddlq_u8(vaddq_u8(ab, cd))) as u64;
+        ptr = ptr.add(128);
+        remaining -= 128;
     }
 
-    // Process remaining bytes
+    // 16 bytes/iter (max 128 bits, fits in the u8 returned by vaddvq_u8).
+    while remaining >= 16 {
+        sum += vaddvq_u8(vcntq_u8(vld1q_u8(ptr))) as u64;
+        ptr = ptr.add(16);
+        remaining -= 16;
+    }
+
+    let tail = std::slice::from_raw_parts(ptr, remaining);
+    for &b in tail {
+        sum += b.count_ones() as u64;
+    }
+    sum as usize
+}
+
+// Four independent accumulators break the POPCNT false-dependency chain on x86_64,
+// matching Go's 4×POPCNTQ-per-iteration bigloop layout.
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "popcnt")]
+unsafe fn count_ones_x86_64(bytes: &[u8]) -> usize {
+    let mut acc0: u64 = 0;
+    let mut acc1: u64 = 0;
+    let mut acc2: u64 = 0;
+    let mut acc3: u64 = 0;
+    let (head, body, tail) = bytes.align_to::<[u64; 4]>();
+    for &b in head {
+        acc0 += b.count_ones() as u64;
+    }
+    for chunk in body {
+        acc0 += chunk[0].count_ones() as u64;
+        acc1 += chunk[1].count_ones() as u64;
+        acc2 += chunk[2].count_ones() as u64;
+        acc3 += chunk[3].count_ones() as u64;
+    }
+    for &b in tail {
+        acc0 += b.count_ones() as u64;
+    }
+    (acc0 + acc1 + acc2 + acc3) as usize
+}
+
+#[cfg(target_arch = "aarch64")]
+#[inline]
+fn count_ones_fast(bytes: &[u8]) -> usize {
+    unsafe { count_ones_neon(bytes) }
+}
+
+#[cfg(target_arch = "x86_64")]
+#[inline]
+fn count_ones_fast(bytes: &[u8]) -> usize {
+    if is_x86_feature_detected!("popcnt") {
+        return unsafe { count_ones_x86_64(bytes) };
+    }
+    let chunks = bytes.chunks_exact(8);
+    let remainder = chunks.remainder();
+    let mut count = 0usize;
+    for chunk in chunks {
+        count += u64::from_ne_bytes(chunk.try_into().unwrap()).count_ones() as usize;
+    }
     for &byte in remainder {
         count += byte.count_ones() as usize;
     }
+    count
+}
 
+#[cfg(not(any(target_arch = "aarch64", target_arch = "x86_64")))]
+#[inline]
+fn count_ones_fast(bytes: &[u8]) -> usize {
+    let chunks = bytes.chunks_exact(8);
+    let remainder = chunks.remainder();
+    let mut count = 0usize;
+    for chunk in chunks {
+        count += u64::from_ne_bytes(chunk.try_into().unwrap()).count_ones() as usize;
+    }
+    for &byte in remainder {
+        count += byte.count_ones() as usize;
+    }
     count
 }
 
