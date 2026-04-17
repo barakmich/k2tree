@@ -3,7 +3,7 @@ package k2tree
 import (
 	"fmt"
 
-	popcount "github.com/tmthrgd/go-popcount"
+	popcount "github.com/barakmich/go-popcount"
 )
 
 type pagedSliceArray struct {

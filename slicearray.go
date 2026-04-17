@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/bits"
 
-	popcount "github.com/tmthrgd/go-popcount"
+	popcount "github.com/barakmich/go-popcount"
 )
 
 type sliceArray struct {

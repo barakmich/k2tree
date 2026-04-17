@@ -1,6 +1,6 @@
 package bytearray
 
-import "github.com/tmthrgd/go-popcount"
+import "github.com/barakmich/go-popcount"
 
 type ByteArray interface {
 	Len() int

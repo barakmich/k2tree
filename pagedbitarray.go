@@ -5,7 +5,7 @@ import (
 	"math"
 	"math/bits"
 
-	popcount "github.com/tmthrgd/go-popcount"
+	popcount "github.com/barakmich/go-popcount"
 )
 
 type pagedBitarray struct {

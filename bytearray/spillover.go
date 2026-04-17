@@ -6,7 +6,7 @@ import (
 	"math"
 	"math/bits"
 
-	"github.com/tmthrgd/go-popcount"
+	"github.com/barakmich/go-popcount"
 )
 
 type SpilloverArray struct {
