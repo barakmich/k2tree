@@ -62,6 +62,53 @@ func TestRowIterator(t *testing.T) {
 	}
 }
 
+func TestColumnIterator(t *testing.T) {
+	tt := []struct {
+		loadtree func(*K2Tree)
+		col      int
+		expected []int
+	}{
+		{
+			loadtree: simpleLoad,
+			col:      30,
+			expected: []int{20, 30, 41},
+		},
+		{
+			loadtree: simpleLoad,
+			col:      17,
+			expected: []int{20, 41},
+		},
+		{
+			loadtree: simpleLoad,
+			col:      1,
+			expected: []int{20, 41},
+		},
+	}
+
+	for i, test := range tt {
+		k2, err := newK2Tree(func() bitarray { return &sliceArray{} }, DefaultConfig)
+		if err != nil {
+			t.Fatal(err)
+		}
+		test.loadtree(k2)
+		it := newColumnIterator(k2, test.col)
+		var out []int
+		for it.Next() {
+			out = append(out, it.Value())
+		}
+		sort.Ints(out)
+		if len(test.expected) != len(out) {
+			t.Errorf("col %d instance %d mismatch in length: out: %v expected %v", test.col, i, out, test.expected)
+			continue
+		}
+		for j := range test.expected {
+			if test.expected[j] != out[j] {
+				t.Errorf("col %d instance %d mismatch: out: %v expected: %v", test.col, i, out, test.expected)
+			}
+		}
+	}
+}
+
 func BenchmarkExtract20Slice(b *testing.B) {
 	k2, err := newK2Tree(func() bitarray { return &sliceArray{} }, DefaultConfig)
 	if err != nil {
