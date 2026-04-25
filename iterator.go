@@ -14,7 +14,7 @@ type Iterator struct {
 	tree   *K2Tree
 	rowcol int
 	isRow  bool
-	offset int  // last returned column (-1 = not yet started)
+	offset int // last returned column (-1 = not yet started)
 	done   bool
 
 	// tstack[i] is the frame for T level (i+1).
@@ -76,8 +76,8 @@ func (it *Iterator) Next() bool {
 	}
 
 	// Try to advance within the current leaf block.
-	// If the next value is still in the same leaf block (bitoff increases),
-	// scan forward without touching the T levels at all.
+	// If the next value's bitoff increases, it might be in the same block.
+	// advanceLeaf handles both same-block and cross-block cases.
 	nextCol := it.offset + 1
 	nextBitoff := it.offsetLForVal(nextCol)
 	if nextBitoff > it.leafBitoff {
@@ -91,6 +91,7 @@ func (it *Iterator) Next() bool {
 	for i := 0; i < it.tree.levels; i++ {
 		frame := &it.tstack[i]
 		level := i + 1
+		levelStart := it.tree.levelOffsets[level]
 
 		// The bit at frame.offInRun was SET (we descended from it).
 		// Advance past it: the set bit contributes +1 to runCount.
@@ -111,7 +112,10 @@ func (it *Iterator) Next() bool {
 				break // this level's block is exhausted; bubble up
 			}
 
-			// frame.runCount is correct here (maintained incrementally).
+			// Recalculate runCount after scanFrame (it may have skipped set bits).
+			bitoff := levelStart + frame.sublayeroff*it.tree.tk.bitsPerLayer + frame.offInRun
+			frame.runCount = it.tree.tbits.Count(levelStart, bitoff)
+
 			if it.descendInto(i-1, frame.runCount, frame.val) {
 				return true
 			}
@@ -227,8 +231,9 @@ func (it *Iterator) descendInto(startIdx int, sublayeroff int, val int) bool {
 		if !it.scanFrame(startIdx) {
 			return false // this level's block exhausted after scanning
 		}
-		// frame.runCount is correct: incremented above + unchanged through
-		// any unset bits that scanFrame skipped.
+		// Recalculate runCount after scanFrame (it may have skipped set bits).
+		bitoff2 := levelStart + frame.sublayeroff*it.tree.tk.bitsPerLayer + frame.offInRun
+		frame.runCount = it.tree.tbits.Count(levelStart, bitoff2)
 	}
 }
 
