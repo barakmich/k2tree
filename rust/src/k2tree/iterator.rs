@@ -54,16 +54,48 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
 
     /// Creates a new column iterator (incoming edges to node col).
     pub fn new_column(tree: &'a K2Tree<T>, col: usize) -> Self {
+        let done = tree.levels == 0;
+        let tstack = if tree.levels > 0 {
+            (0..tree.levels)
+                .map(|i| IterFrame {
+                    sublayeroff: 0,
+                    val: 0,
+                    off_in_run: 0,
+                    run_count: 0,
+                    base_off: tree.offset_t_for_layer(0, col, i + 1),
+                })
+                .collect()
+        } else {
+            Vec::new()
+        };
         K2TreeIterator {
             tree,
             rowcol: col,
             is_row: false,
             offset: -1,
-            done: true,
-            tstack: Vec::new(),
+            done,
+            tstack,
             leaf_sub: 0,
             leaf_col: 0,
             leaf_bitoff: 0,
+        }
+    }
+
+    /// Like `offset_t_for_layer` but swaps arguments for column iteration.
+    fn offset_t_for_val(&self, val: usize, level: usize) -> usize {
+        if self.is_row {
+            self.tree.offset_t_for_layer(self.rowcol, val, level)
+        } else {
+            self.tree.offset_t_for_layer(val, self.rowcol, level)
+        }
+    }
+
+    /// Like `offset_l` but swaps arguments for column iteration.
+    fn offset_l_for_val(&self, val: usize) -> usize {
+        if self.is_row {
+            self.tree.offset_l(self.rowcol, val)
+        } else {
+            self.tree.offset_l(val, self.rowcol)
         }
     }
 
@@ -83,7 +115,7 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
 
         // Try to advance within the current leaf block.
         let next_col = (self.offset + 1) as usize;
-        let next_bitoff = self.tree.offset_l(self.rowcol, next_col);
+        let next_bitoff = self.offset_l_for_val(next_col);
         if next_bitoff > self.leaf_bitoff {
             self.leaf_col = next_col;
             if self.advance_leaf() {
@@ -94,10 +126,11 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
         // Leaf block exhausted. Bubble up through T levels.
         for i in 0..self.tree.levels {
             let level = i + 1;
+            let level_start = self.tree.level_offsets[level];
 
             self.tstack[i].run_count += 1;
             let new_val = self.tree.increment_n_for_level(self.tstack[i].val, 1, level);
-            let new_off_in_run = self.tree.offset_t_for_layer(self.rowcol, new_val, level);
+            let new_off_in_run = self.offset_t_for_val(new_val, level);
             if new_off_in_run < self.tstack[i].off_in_run {
                 continue;
             }
@@ -109,6 +142,12 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
                     break;
                 }
 
+                // Recalculate run_count after scan_frame (it may have skipped set bits).
+                let bitoff = level_start
+                    + self.tstack[i].sublayeroff * self.tree.tk.bits_per_layer
+                    + self.tstack[i].off_in_run;
+                self.tstack[i].run_count = self.tree.tbits.count(level_start, bitoff);
+
                 let run_count = self.tstack[i].run_count;
                 let val = self.tstack[i].val;
                 if self.descend_into(i as isize - 1, run_count, val) {
@@ -117,7 +156,7 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
 
                 self.tstack[i].run_count += 1;
                 let new_val2 = self.tree.increment_n_for_level(self.tstack[i].val, 1, level);
-                let new_off2 = self.tree.offset_t_for_layer(self.rowcol, new_val2, level);
+                let new_off2 = self.offset_t_for_val(new_val2, level);
                 if new_off2 < self.tstack[i].off_in_run {
                     break;
                 }
@@ -158,7 +197,7 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
                 return true;
             }
             let new_val = self.tree.increment_n_for_level(self.tstack[i].val, 1, level);
-            let new_off = self.tree.offset_t_for_layer(self.rowcol, new_val, level);
+            let new_off = self.offset_t_for_val(new_val, level);
             if new_off < self.tstack[i].off_in_run {
                 self.tstack[i].val = new_val;
                 self.tstack[i].off_in_run = new_off;
@@ -204,7 +243,7 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
 
             self.tstack[i].run_count += 1;
             let new_val = self.tree.increment_n_for_level(self.tstack[i].val, 1, level);
-            let new_off = self.tree.offset_t_for_layer(self.rowcol, new_val, level);
+            let new_off = self.offset_t_for_val(new_val, level);
             if new_off < self.tstack[i].off_in_run {
                 return false;
             }
@@ -214,6 +253,11 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
             if !self.scan_frame(i) {
                 return false;
             }
+            // Recalculate run_count after scan_frame (it may have skipped set bits).
+            let bitoff2 = level_start
+                + self.tstack[i].sublayeroff * self.tree.tk.bits_per_layer
+                + self.tstack[i].off_in_run;
+            self.tstack[i].run_count = self.tree.tbits.count(level_start, bitoff2);
         }
     }
 
@@ -221,19 +265,19 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
     // Updates leaf_col, leaf_bitoff, and offset on success.
     fn advance_leaf(&mut self) -> bool {
         let leafoffset = self.leaf_sub * self.tree.lk.bits_per_layer;
-        let mut col = self.leaf_col;
-        let mut bitoff = self.tree.offset_l(self.rowcol, col);
+        let mut val = self.leaf_col;
+        let mut bitoff = self.offset_l_for_val(val);
         loop {
             if self.tree.lbits.get(leafoffset + bitoff) {
-                self.leaf_col = col;
+                self.leaf_col = val;
                 self.leaf_bitoff = bitoff;
-                self.offset = col as isize;
+                self.offset = val as isize;
                 return true;
             }
-            col += 1;
-            let new_bitoff = self.tree.offset_l(self.rowcol, col);
+            val += 1;
+            let new_bitoff = self.offset_l_for_val(val);
             if new_bitoff < bitoff {
-                self.leaf_col = col;
+                self.leaf_col = val;
                 return false;
             }
             bitoff = new_bitoff;

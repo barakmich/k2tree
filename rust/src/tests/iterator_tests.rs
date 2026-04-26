@@ -82,4 +82,52 @@ mod tests {
 
         assert_eq!(values, expected);
     }
+
+    #[test]
+    fn test_column_iterator() {
+        struct TestCase {
+            col: usize,
+            expected: Vec<usize>,
+        }
+
+        let test_cases = vec![
+            TestCase {
+                col: 30,
+                expected: vec![20, 30, 41],
+            },
+            TestCase {
+                col: 17,
+                expected: vec![20, 41],
+            },
+            TestCase {
+                col: 1,
+                expected: vec![20, 41],
+            },
+        ];
+
+        for (i, test) in test_cases.into_iter().enumerate() {
+            let mut k2 =
+                K2Tree::new_with_config(SliceArray::new(), SliceArray::new(), DEFAULT_CONFIG);
+            simple_load(&mut k2);
+
+            let mut out = k2.to(test.col).extract_all();
+            out.sort();
+
+            assert_eq!(
+                out.len(),
+                test.expected.len(),
+                "col {} instance {} mismatch in length: out: {:?} expected {:?}",
+                test.col, i, out, test.expected
+            );
+
+            for j in 0..test.expected.len() {
+                assert_eq!(
+                    out[j],
+                    test.expected[j],
+                    "col {} instance {} mismatch: out: {:?} expected: {:?}",
+                    test.col, i, out, test.expected
+                );
+            }
+        }
+    }
 }
