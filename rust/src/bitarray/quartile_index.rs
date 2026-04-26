@@ -249,9 +249,11 @@ mod tests {
         for i in 0..3 {
             let offset = quartile.offsets[i];
             let expected = quartile.bits.count(0, offset);
-            assert_eq!(quartile.counts[i], expected,
+            assert_eq!(
+                quartile.counts[i], expected,
                 "Count invariant failed: quartile index {}, count {}, expected {}",
-                i, quartile.counts[i], expected);
+                i, quartile.counts[i], expected
+            );
         }
     }
 

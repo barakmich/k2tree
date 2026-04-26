@@ -391,5 +391,4 @@ mod tests {
 
         assert_eq!(lru.total(), 3);
     }
-
 }

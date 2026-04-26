@@ -3,7 +3,7 @@ mod grow;
 mod iterator;
 
 pub use config::{
-    Config, DEFAULT_CONFIG, FOUR_BITS_PER_LAYER, FOUR_FOUR_CONFIG, LayerDef,
+    Config, LayerDef, DEFAULT_CONFIG, FOUR_BITS_PER_LAYER, FOUR_FOUR_CONFIG,
     SIXTEEN_BITS_PER_LAYER, SIXTEEN_FOUR_CONFIG, SIXTEEN_SIXTEEN_CONFIG,
 };
 pub use iterator::K2TreeIterator;

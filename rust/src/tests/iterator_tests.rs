@@ -1,5 +1,5 @@
 use crate::bitarray::SliceArray;
-use crate::k2tree::{DEFAULT_CONFIG, K2Tree};
+use crate::k2tree::{K2Tree, DEFAULT_CONFIG};
 
 #[cfg(test)]
 mod tests {
@@ -117,13 +117,15 @@ mod tests {
                 out.len(),
                 test.expected.len(),
                 "col {} instance {} mismatch in length: out: {:?} expected {:?}",
-                test.col, i, out, test.expected
+                test.col,
+                i,
+                out,
+                test.expected
             );
 
             for j in 0..test.expected.len() {
                 assert_eq!(
-                    out[j],
-                    test.expected[j],
+                    out[j], test.expected[j],
                     "col {} instance {} mismatch: out: {:?} expected: {:?}",
                     test.col, i, out, test.expected
                 );

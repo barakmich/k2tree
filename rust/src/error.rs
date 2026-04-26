@@ -2,18 +2,9 @@ use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum K2TreeError {
-    OutOfBounds {
-        index: usize,
-        length: usize,
-    },
-    InvalidOffset {
-        offset: usize,
-        length: usize,
-    },
-    InvalidSize {
-        size: usize,
-        reason: String,
-    },
+    OutOfBounds { index: usize, length: usize },
+    InvalidOffset { offset: usize, length: usize },
+    InvalidSize { size: usize, reason: String },
     InsertError(String),
 }
 

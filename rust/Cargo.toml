@@ -25,3 +25,7 @@ harness = false
 [[bench]]
 name = "lru_bench"
 harness = false
+
+[[bench]]
+name = "insert_four_bench"
+harness = false

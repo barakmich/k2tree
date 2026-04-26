@@ -129,7 +129,9 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
             let level_start = self.tree.level_offsets[level];
 
             self.tstack[i].run_count += 1;
-            let new_val = self.tree.increment_n_for_level(self.tstack[i].val, 1, level);
+            let new_val = self
+                .tree
+                .increment_n_for_level(self.tstack[i].val, 1, level);
             let new_off_in_run = self.offset_t_for_val(new_val, level);
             if new_off_in_run < self.tstack[i].off_in_run {
                 continue;
@@ -155,7 +157,9 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
                 }
 
                 self.tstack[i].run_count += 1;
-                let new_val2 = self.tree.increment_n_for_level(self.tstack[i].val, 1, level);
+                let new_val2 = self
+                    .tree
+                    .increment_n_for_level(self.tstack[i].val, 1, level);
                 let new_off2 = self.offset_t_for_val(new_val2, level);
                 if new_off2 < self.tstack[i].off_in_run {
                     break;
@@ -196,7 +200,9 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
             if self.tree.tbits.get(bitoff) {
                 return true;
             }
-            let new_val = self.tree.increment_n_for_level(self.tstack[i].val, 1, level);
+            let new_val = self
+                .tree
+                .increment_n_for_level(self.tstack[i].val, 1, level);
             let new_off = self.offset_t_for_val(new_val, level);
             if new_off < self.tstack[i].off_in_run {
                 self.tstack[i].val = new_val;
@@ -229,9 +235,8 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
             return false;
         }
 
-        let bitoff = level_start
-            + sublayeroff * self.tree.tk.bits_per_layer
-            + self.tstack[i].off_in_run;
+        let bitoff =
+            level_start + sublayeroff * self.tree.tk.bits_per_layer + self.tstack[i].off_in_run;
         self.tstack[i].run_count = self.tree.tbits.count(level_start, bitoff);
 
         loop {
@@ -242,7 +247,9 @@ impl<'a, T: BitArray> K2TreeIterator<'a, T> {
             }
 
             self.tstack[i].run_count += 1;
-            let new_val = self.tree.increment_n_for_level(self.tstack[i].val, 1, level);
+            let new_val = self
+                .tree
+                .increment_n_for_level(self.tstack[i].val, 1, level);
             let new_off = self.offset_t_for_val(new_val, level);
             if new_off < self.tstack[i].off_in_run {
                 return false;

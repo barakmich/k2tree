@@ -55,11 +55,8 @@ mod tests {
     #[test]
     fn test_sixteen_bpl_simplified() {
         // Simplified version of TestSixteenBPL - adds fewer edges for faster testing
-        let mut kk = K2Tree::new_with_config(
-            SliceArray::new(),
-            SliceArray::new(),
-            SIXTEEN_SIXTEEN_CONFIG,
-        );
+        let mut kk =
+            K2Tree::new_with_config(SliceArray::new(), SliceArray::new(), SIXTEEN_SIXTEEN_CONFIG);
 
         let base = 5000000;
         // Add 1000 edges instead of 1M for faster testing

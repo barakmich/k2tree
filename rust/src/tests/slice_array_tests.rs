@@ -101,9 +101,15 @@ mod tests {
                 .unwrap_or_else(|_| panic!("insert failed for test case {}", i));
 
             assert_eq!(
-                arr.bytes(), test.output,
+                arr.bytes(),
+                test.output,
                 "Test case {} failed: got {:?}, expected {:?} (n: {}, at: {}, len: {})",
-                i, arr.bytes(), test.output, test.n, test.at, test.length
+                i,
+                arr.bytes(),
+                test.output,
+                test.n,
+                test.at,
+                test.length
             );
         }
     }
